@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ruang Main</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: a night-market game shelf. Hero shelf for the featured game, then a cabinet grid you can filter by genre. */
+:root {
+  --ink: #120f1c;        /* page ground */
+  --shelf: #1c1830;      /* card surface */
+  --rim: #322a4e;        /* hairlines */
+  --paper: #f3eee4;      /* text */
+  --dim: #a59fbc;        /* secondary text */
+  --lamp: #ffb547;       /* accent: lantern amber */
+  --lamp-ink: #2a1600;
+  --display: 'Bricolage Grotesque', 'Plus Jakarta Sans', system-ui, sans-serif;
+  --body: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body { margin: 0; background: var(--ink); color: var(--paper); font: 400 15px/1.5 var(--body); -webkit-font-smoothing: antialiased; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ink); }
+.wrap { max-width: 1080px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 56px; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--lamp); outline-offset: 3px; border-radius: 8px; }
+
+/* ---------- Header ---------- */
+header.top { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand .mark { width: 46px; height: 46px; flex: none; }
+.brand h1 { margin: 0; font: 800 clamp(30px, 6vw, 44px)/0.95 var(--display); letter-spacing: -0.02em; text-wrap: balance; }
+.brand p { margin: 4px 0 0; color: var(--dim); font-size: 14px; }
+.count { font: 600 13px var(--body); color: var(--dim); letter-spacing: 0.04em; }
+.count b { color: var(--lamp); font-variant-numeric: tabular-nums; }
+
+/* ---------- Featured ---------- */
+.feature { position: relative; display: grid; grid-template-columns: 1.25fr 1fr; gap: 0; border-radius: 22px; overflow: hidden; background: var(--shelf); border: 1px solid var(--rim); margin-bottom: 28px; }
+.feature .shot { position: relative; min-height: 240px; background: #000; }
+.feature .shot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.feature .shot::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 55%, var(--shelf)); }
+.feature .txt { padding: 26px 26px 24px 18px; display: flex; flex-direction: column; gap: 10px; justify-content: center; min-width: 0; }
+.eyebrow { font: 700 11px var(--body); letter-spacing: 0.14em; text-transform: uppercase; color: var(--lamp); }
+.feature h2 { margin: 0; font: 800 clamp(26px, 4.4vw, 38px)/1 var(--display); letter-spacing: -0.02em; text-wrap: balance; }
+.feature p { margin: 0; color: var(--dim); max-width: 46ch; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+
+.btn { white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 12px; border: 1px solid var(--rim); background: transparent; color: var(--paper); font: 700 14px var(--body); text-decoration: none; cursor: pointer; transition: transform .12s, background .12s; }
+.btn:hover { background: #ffffff10; }
+.btn:active { transform: translateY(1px); }
+.btn.play { background: var(--lamp); color: var(--lamp-ink); border-color: transparent; box-shadow: 0 6px 22px -8px var(--lamp); }
+.btn.play:hover { background: #ffc66e; }
+.btn svg { width: 16px; height: 16px; }
+
+/* ---------- Filters ---------- */
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.bar h3 { margin: 0; font: 800 20px var(--display); letter-spacing: -0.01em; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { padding: 7px 13px; border-radius: 99px; border: 1px solid var(--rim); background: transparent; color: var(--dim); font: 700 13px var(--body); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--paper); color: var(--ink); border-color: var(--paper); }
+
+/* ---------- Grid ---------- */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+.game { display: flex; flex-direction: column; background: var(--shelf); border: 1px solid var(--rim); border-radius: 18px; overflow: hidden; transition: transform .15s, border-color .15s; }
+.game:hover { transform: translateY(-3px); border-color: #4a3f6e; }
+.game .shot { position: relative; aspect-ratio: 4 / 3; max-width: 100%; background: #000; cursor: pointer; border: 0; padding: 0; display: block; width: 100%; }
+.game .shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.game .shot .genre { position: absolute; left: 10px; top: 10px; padding: 4px 9px; border-radius: 8px; background: #120f1ccc; font: 700 11px var(--body); letter-spacing: 0.06em; text-transform: uppercase; backdrop-filter: blur(4px); }
+.game .shot .last { position: absolute; right: 10px; top: 10px; padding: 4px 9px; border-radius: 8px; background: var(--lamp); color: var(--lamp-ink); font: 800 11px var(--body); }
+.game .body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0; }
+.game h4 { margin: 0; font: 800 21px/1.1 var(--display); letter-spacing: -0.01em; }
+.game p { margin: 0; color: var(--dim); font-size: 14px; }
+.meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+.meta span { font: 600 12px var(--body); color: var(--dim); padding: 3px 8px; border-radius: 7px; background: #ffffff0a; border: 1px solid var(--rim); }
+.game .actions { margin-top: auto; padding-top: 6px; }
+.game .actions .btn { padding: 9px 14px; font-size: 13px; }
+.note { margin-top: 30px; color: var(--dim); font-size: 13px; max-width: 70ch; }
+
+/* ---------- Player ---------- */
+#player { position: fixed; inset: 0; z-index: 50; background: #000; }
+#player iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+#exitTab { position: absolute; left: env(safe-area-inset-left, 0px); top: 50%; transform: translateY(-50%); width: 22px; height: 64px; border-radius: 0 12px 12px 0; border: 1px solid #ffffff30; border-left: 0; background: #120f1cd9; color: var(--paper); font: 800 18px var(--body); cursor: pointer; z-index: 2; opacity: 0.7; }
+#exitTab:hover { opacity: 1; }
+#exitBar { position: absolute; left: calc(env(safe-area-inset-left, 0px) + 12px); top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 14px; border-radius: 14px; background: #120f1cf0; border: 1px solid var(--rim); z-index: 3; box-shadow: 0 10px 40px #0008; }
+#exitBar span { font: 700 14px var(--body); }
+#exitBar .btn { padding: 8px 12px; font-size: 13px; }
+#loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--dim); font: 700 14px var(--body); pointer-events: none; }
+
+
+/* ---------- Admin ---------- */
+.count { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.admin-btn { padding: 7px 12px; font-size: 12px; border-color: var(--lamp); color: var(--lamp); }
+#admin { position: fixed; inset: 0; z-index: 40; background: #0a0812e6; backdrop-filter: blur(4px); overflow-y: auto; }
+#admin .sheet { max-width: 760px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: calc(env(safe-area-inset-top, 0px) + 22px) 48px; display: flex; flex-direction: column; gap: 16px; }
+.sheet-head { display: flex; align-items: center; gap: 12px; }
+.sheet-head h2 { margin: 0; font: 800 26px var(--display); flex: 1; }
+.panel { background: var(--shelf); border: 1px solid var(--rim); border-radius: 18px; padding: 16px; }
+.panel h3 { margin: 0 0 12px; font: 800 17px var(--display); }
+.form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form .full { grid-column: 1 / -1; }
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field label { font: 700 12px var(--body); color: var(--dim); letter-spacing: 0.03em; }
+.field input, .field select { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--rim); background: var(--ink); color: var(--paper); font: 600 14px var(--body); }
+.field input.code-in { font: 800 16px var(--display); letter-spacing: 0.08em; text-transform: uppercase; }
+.inline { display: flex; gap: 8px; }
+.inline input { flex: 1; min-width: 0; }
+.rewards { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+.msg { font: 700 13px var(--body); min-height: 1.2em; }
+.msg.err { color: #ff8a8a; } .msg.ok { color: #8fe0a0; }
+.codes { display: flex; flex-direction: column; gap: 10px; }
+.code-row { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: center; padding: 12px 14px; border-radius: 14px; background: var(--ink); border: 1px solid var(--rim); }
+.code-row.off { opacity: 0.55; }
+.code-row .code { font: 800 18px var(--display); letter-spacing: 0.08em; word-break: break-all; }
+.code-row .sub { color: var(--dim); font-size: 13px; }
+.code-row .chips2 { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; grid-column: 1 / -1; }
+.code-row .chips2 span { font: 700 12px var(--body); padding: 3px 8px; border-radius: 7px; background: #ffffff0d; border: 1px solid var(--rim); }
+.code-row .chips2 .st-on { color: #8fe0a0; border-color: #8fe0a055; } .code-row .chips2 .st-off { color: #ff9a9a; border-color: #ff9a9a55; }
+.code-row .acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.code-row .acts .btn { padding: 7px 10px; font-size: 12px; }
+.btn.danger { border-color: #ff7a7a66; color: #ff9a9a; }
+.empty { color: var(--dim); text-align: center; padding: 18px 8px; }
+@media (max-width: 560px) { .form { grid-template-columns: 1fr; } .code-row { grid-template-columns: 1fr; } .code-row .acts { justify-content: flex-start; } }
+
+@media (max-width: 720px) {
+  .feature { grid-template-columns: 1fr; }
+  .feature .shot { min-height: 0; aspect-ratio: 16 / 10; max-width: 100%; }
+  .feature .shot::after { background: linear-gradient(180deg, transparent 55%, var(--shelf)); }
+  .feature .txt { padding: 4px 18px 20px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 48 48" aria-hidden="true"><rect x="2" y="8" width="44" height="32" rx="10" fill="#ffb547"/><circle cx="15" cy="24" r="6" fill="#2a1600"/><rect x="12" y="21" width="6" height="6" rx="1" fill="#ffb547"/><circle cx="31" cy="21" r="3" fill="#2a1600"/><circle cx="37" cy="27" r="3" fill="#2a1600"/></svg>
+      <div><h1>Ruang Main</h1><p>Semua game buatanmu, satu pintu. Pilih, lalu main.</p></div>
+    </div>
+    <div class="count"><button class="btn admin-btn" id="adminBtn" hidden>Admin · Kode redeem</button><b id="nGames">4</b> game · semua offline · progres tersimpan di perangkat ini</div>
+  </header>
+
+  <section class="feature" id="feature" aria-label="Game pilihan"></section>
+
+  <div class="bar">
+    <h3>Koleksi</h3>
+    <div class="chips" id="chips" role="group" aria-label="Saring menurut genre"></div>
+  </div>
+  <div class="grid" id="grid"></div>
+
+  <p class="note">Tips: tekan tab kecil <b>‹</b> di sisi kiri layar saat bermain untuk kembali ke Ruang Main. Setiap game menyimpan progresnya sendiri, jadi kamu bisa berpindah game kapan saja tanpa kehilangan kemajuan.</p>
+</div>
+
+
+<div id="admin" hidden>
+  <div class="sheet">
+    <div class="sheet-head"><h2>Kode redeem</h2><button class="btn" id="adminClose">Tutup</button></div>
+    <p class="muted" style="margin:0;color:var(--dim)">Kode yang kamu buat di sini langsung berlaku untuk semua pemain yang membuka game lewat Ruang Main. Setiap pemain hanya bisa memakai satu kode sekali per game.</p>
+    <section class="panel">
+      <h3>Buat kode baru</h3>
+      <form class="form" id="codeForm" autocomplete="off">
+        <div class="field full"><label for="fCode">Kode</label><div class="inline"><input id="fCode" class="code-in" maxlength="24" placeholder="MISAL: LEBARAN2026" required><button type="button" class="btn" id="fRand">Acak</button></div></div>
+        <div class="field"><label for="fGame">Berlaku untuk</label><select id="fGame"></select></div>
+        <div class="field"><label for="fLabel">Nama hadiah (tampil di game)</label><input id="fLabel" maxlength="40" placeholder="Hadiah spesial"></div>
+        <div class="field full"><label>Isi hadiah</label><div class="rewards" id="fRewards"></div></div>
+        <div class="field"><label for="fStart">Mulai berlaku (opsional)</label><input id="fStart" type="date"></div>
+        <div class="field"><label for="fExp">Hari terakhir berlaku (opsional)</label><input id="fExp" type="date"></div>
+        <div class="full inline" style="align-items:center"><button class="btn play" type="submit" id="fSubmit">Buat kode</button><span class="msg" id="fMsg"></span></div>
+      </form>
+    </section>
+    <section class="panel">
+      <h3>Daftar kode <span id="codeCount" style="color:var(--dim);font:600 13px var(--body)"></span></h3>
+      <div class="codes" id="codeList"><div class="empty">Memuat daftar kode…</div></div>
+    </section>
+  </div>
+</div>
+
+<div id="player" hidden>
+  <div id="loading">Memuat game…</div>
+  <iframe id="frame" title="Game" allow="autoplay; fullscreen"></iframe>
+  <button id="exitTab" aria-label="Kembali ke Ruang Main">‹</button>
+  <div id="exitBar" hidden><span>Kembali ke Ruang Main?</span><button class="btn play" id="exitYes">Ya</button><button class="btn" id="exitNo">Lanjut main</button></div>
+</div>
+
+<script>
+const GAMES = [
+  { id: 'kage-blade', title: 'Kage Blade', sub: 'Stickman Ninja Idle', genre: 'Idle RPG', file: 'games/kage-blade.html', thumb: 'thumbs/kage-blade.jpg',
+    desc: 'Ninja stickman bertarung sendiri melewati 7 region Jepang. Latih statistik, summon pedang dan skill, taklukkan dungeon, lalu ascend.', meta: ['Portrait', 'Auto-battle', 'Speed 2×'], added: 5 },
+  { id: 'pet-guardians', title: 'Pet Guardians', sub: 'Eldoria', genre: 'Tower Defense', file: 'games/pet-guardians.html', thumb: 'thumbs/pet-guardians.jpg',
+    desc: 'Jaga tembok kastil bersama hero dan 12 pet ajaib. Api, petir, cahaya bulan, dan black hole menghujani gelombang monster.', meta: ['Portrait', '90 stage', 'Pet & hero'], added: 4 },
+  { id: 'eldoria', title: 'Eldoria', sub: 'Kingdoms at War', genre: 'Strategi', file: 'games/eldoria.html', thumb: 'thumbs/eldoria.jpg',
+    desc: 'Bangun kerajaan, latih pasukan, dan bersaing dengan 60 kerajaan AI di peta dunia. Rebut takhta lewat Throne War.', meta: ['Portrait', '60 kerajaan AI', 'Peta dunia'], added: 3 },
+  { id: 'crownhold', title: 'Crownhold', sub: 'Kingdom Siege', genre: 'Strategi', file: 'games/crownhold.html', thumb: 'thumbs/crownhold.jpg',
+    desc: 'Bangun kota kastilmu, serbu lawan, dan pertahankan tembok di mode tower defense tanpa akhir.', meta: ['Portrait', 'Bangun kota', 'Tower defense'], added: 2 },
+];
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage blocked */ } } };
+const $ = id => document.getElementById(id);
+const playIcon = '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 2.5v11l9-5.5z"/></svg>';
+const extIcon = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 3h4v4M13 3 7 9M11 9.5V13H3V5h3.5"/></svg>';
+let filter = 'Semua';
+
+function lastPlayed() { const id = store.get('ruangmain.last'); return GAMES.find(g => g.id === id) || null; }
+function renderFeature() {
+  const last = lastPlayed(), g = last || GAMES[0];
+  $('feature').innerHTML = '<div class="shot"><img src="' + g.thumb + '" alt="Cuplikan ' + g.title + '"></div><div class="txt"><div class="eyebrow">' + (last ? 'Lanjutkan permainan' : 'Game terbaru') + ' · ' + g.genre + '</div><h2>' + g.title + '</h2><p>' + g.desc + '</p><div class="actions"><button class="btn play" data-play="' + g.id + '">' + playIcon + (last ? 'Lanjut main' : 'Main sekarang') + '</button><a class="btn" href="' + g.file + '" target="_blank" rel="noopener">' + extIcon + 'Tab baru</a></div></div>';
+}
+function renderChips() {
+  const genres = ['Semua', ...new Set(GAMES.map(g => g.genre))];
+  $('chips').innerHTML = genres.map(x => '<button class="chip" aria-pressed="' + (x === filter) + '" data-genre="' + x + '">' + x + '</button>').join('');
+}
+function renderGrid() {
+  const last = lastPlayed();
+  $('grid').innerHTML = GAMES.filter(g => filter === 'Semua' || g.genre === filter).map(g =>
+    '<article class="game"><button class="shot" data-play="' + g.id + '" aria-label="Main ' + g.title + '"><img src="' + g.thumb + '" alt="" loading="lazy"><span class="genre">' + g.genre + '</span>' + (last && last.id === g.id ? '<span class="last">Terakhir dimainkan</span>' : '') + '</button>' +
+    '<div class="body"><h4>' + g.title + ' <span style="color:var(--dim);font:600 13px var(--body)">' + g.sub + '</span></h4><p>' + g.desc + '</p><div class="meta">' + g.meta.map(m => '<span>' + m + '</span>').join('') + '</div>' +
+    '<div class="actions"><button class="btn play" data-play="' + g.id + '">' + playIcon + 'Main</button><a class="btn" href="' + g.file + '" target="_blank" rel="noopener">' + extIcon + 'Tab baru</a></div></div></article>').join('');
+}
+function render() { $('nGames').textContent = GAMES.length; renderFeature(); renderChips(); renderGrid(); }
+
+/* ---------- Player ---------- */
+function open(id, push = true) {
+  const g = GAMES.find(x => x.id === id); if (!g) return;
+  store.set('ruangmain.last', id);
+  $('loading').hidden = false; $('frame').onload = () => { $('loading').hidden = true; try { $('frame').contentWindow.focus(); } catch (e) { /* ignore */ } };
+  $('frame').src = g.file; $('player').hidden = false; $('exitBar').hidden = true; document.body.style.overflow = 'hidden';
+  document.title = g.title + ' · Ruang Main';
+  if (push && location.hash !== '#' + id) location.hash = id;
+}
+function close() {
+  $('player').hidden = true; $('frame').src = 'about:blank'; document.body.style.overflow = ''; document.title = 'Ruang Main';
+  if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+  render();
+}
+document.addEventListener('click', e => {
+  const p = e.target.closest('[data-play]'); if (p) return open(p.dataset.play);
+  const c = e.target.closest('[data-genre]'); if (c) { filter = c.dataset.genre; renderChips(); renderGrid(); }
+});
+$('exitTab').addEventListener('click', () => { $('exitBar').hidden = false; });
+$('exitNo').addEventListener('click', () => { $('exitBar').hidden = true; });
+$('exitYes').addEventListener('click', close);
+window.addEventListener('hashchange', () => { const id = location.hash.slice(1); if (GAMES.some(g => g.id === id)) open(id, false); else if (!$('player').hidden) close(); });
+
+
+/* ---------- Portal redeem codes (shared db) ---------- */
+const CODE_KEY = 'ruangmain.codes';
+const RESERVED = ['KAGEBLADE', 'NINJAWAY', 'SAKURA2026', 'PETGUARD', 'ELDORIAPETS', 'MOONLIGHT', 'ELDORIA', 'WARCHEST', 'SAFEHAVEN', 'DRAGONFIRE', 'WELCOME2026', 'CROWNHOLD', 'ROYALARMY'];
+const REWARDS = {
+  all: [['gems', 'Gem'], ['gold', 'Gold']],
+  'kage-blade': [['gems', 'Gem'], ['gold', 'Gold']],
+  'pet-guardians': [['gems', 'Gem'], ['gold', 'Gold'], ['food', 'Makanan pet'], ['commonEgg', 'Telur biasa'], ['mysticEgg', 'Telur mistis']],
+  eldoria: [['gems', 'Gem'], ['gold', 'Gold'], ['wood', 'Kayu'], ['stone', 'Batu'], ['food', 'Makanan'], ['runes', 'Rune'], ['xp', 'XP']],
+  crownhold: [['gems', 'Gem'], ['gold', 'Gold'], ['wood', 'Kayu'], ['stone', 'Batu'], ['runes', 'Rune'], ['xp', 'XP']],
+};
+const GAME_NAME = { all: 'Semua game' }; GAMES.forEach(g => { GAME_NAME[g.id] = g.title; });
+const norm = s => String(s || '').trim().toUpperCase().replace(/\s+/g, '');
+function fnv(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h.toString(36); }
+const codeHash = code => { const n = norm(code); return fnv('ruangmain:' + n) + fnv(n + ':rm'); };
+let db = null, isAdmin = false, codes = [], secrets = {}, secretsSub = null;
+const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function cacheCodes() { store.set(CODE_KEY, JSON.stringify({ v: 1, at: Date.now(), codes: codes.map(c => ({ ph: c.ph, game: c.game, label: c.label, reward: c.reward, start: c.start || null, expires: c.expires || null, active: c.active !== false })) })); }
+async function initCodes() {
+  if (!window.claude || !window.claude.use) return;
+  try { db = await window.claude.use('db'); } catch (e) { db = null; }
+  if (db) {
+    let timer = setTimeout(() => { if (isAdmin) $('codeList').innerHTML = '<div class="empty">Daftar kode belum bisa dimuat. Coba buka ulang halaman ini.</div>'; }, 10000);
+    db.collection('codes').onSnapshot(snap => { clearTimeout(timer); codes = snap.docs.map(d => Object.assign({ id: d.id }, d.data())).filter(c => c.ph).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)); cacheCodes(); renderCodes(); },
+      () => { clearTimeout(timer); });
+  }
+  let user = null; try { user = await window.claude.use('user'); } catch (e) { user = null; }
+  isAdmin = user ? await user.canEdit().catch(() => false) : false;
+  $('adminBtn').hidden = !(isAdmin && db);
+}
+function openAdmin() {
+  $('admin').hidden = false; document.body.style.overflow = 'hidden';
+  if (!secretsSub && db) secretsSub = db.collection('codesecret').onSnapshot(snap => { secrets = {}; snap.docs.forEach(d => { const v = d.data(); if (v && v.code) secrets[d.id] = v.code; }); renderCodes(); }, () => {});
+  renderRewardFields(); renderCodes();
+}
+function closeAdmin() { $('admin').hidden = true; document.body.style.overflow = ''; }
+function renderGameSelect() { $('fGame').innerHTML = '<option value="all">Semua game</option>' + GAMES.map(g => '<option value="' + g.id + '">' + g.title + '</option>').join(''); }
+function renderRewardFields() {
+  const game = $('fGame').value || 'all', keep = {};
+  $('fRewards').querySelectorAll('input').forEach(i => { keep[i.dataset.rw] = i.value; });
+  $('fRewards').innerHTML = REWARDS[game].map(([k, name]) => '<div class="field"><label for="rw-' + k + '">' + name + '</label><input id="rw-' + k + '" data-rw="' + k + '" type="number" min="0" step="1" inputmode="numeric" placeholder="0" value="' + (keep[k] || '') + '"></div>').join('');
+}
+const rewardText = (game, rw) => (REWARDS[game] || REWARDS.all).filter(([k]) => rw && rw[k]).map(([k, n]) => '<span>' + Number(rw[k]).toLocaleString('id-ID') + ' ' + n + '</span>').join('');
+function status(c) { const day = new Date().toISOString().slice(0, 10); if (c.active === false) return ['Nonaktif', 'st-off']; if (c.expires && day > c.expires) return ['Kedaluwarsa', 'st-off']; if (c.start && day < c.start) return ['Belum mulai', 'st-off']; return ['Aktif', 'st-on']; }
+function renderCodes() {
+  if ($('admin').hidden) return;
+  $('codeCount').textContent = codes.length ? '· ' + codes.length + ' kode' : '';
+  if (!codes.length) { $('codeList').innerHTML = '<div class="empty">Belum ada kode. Buat kode pertama dengan formulir di atas.</div>'; return; }
+  $('codeList').innerHTML = codes.map(c => { const [st, cls] = status(c), txt = secrets[c.ph];
+    return '<div class="code-row ' + (cls === 'st-off' ? 'off' : '') + '"><div><div class="code">' + (txt ? esc(txt) : '••••••') + '</div><div class="sub">' + esc(c.label || 'Gift') + ' · ' + esc(GAME_NAME[c.game] || c.game) + (c.start ? ' · mulai ' + c.start : '') + (c.expires ? ' · s/d ' + c.expires : '') + '</div></div>' +
+      '<div class="acts">' + (txt ? '<button class="btn" data-copy="' + esc(txt) + '">Salin</button>' : '') + '<button class="btn" data-toggle="' + c.ph + '">' + (c.active === false ? 'Aktifkan' : 'Nonaktifkan') + '</button><button class="btn danger" data-del="' + c.ph + '">Hapus</button></div>' +
+      '<div class="chips2"><span class="' + cls + '">' + st + '</span>' + rewardText(c.game, c.reward) + '</div></div>'; }).join('');
+}
+function randomCode() { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; const r = new Uint32Array(8); crypto.getRandomValues(r); for (let i = 0; i < 8; i++) s += A[r[i] % A.length]; return s.slice(0, 4) + s.slice(4); }
+function msg(t, ok) { $('fMsg').textContent = t; $('fMsg').className = 'msg ' + (ok ? 'ok' : 'err'); }
+async function createCode(e) {
+  e.preventDefault(); if (!db) return msg('Database tidak tersedia. Buka halaman ini dalam keadaan login.');
+  const code = norm($('fCode').value), game = $('fGame').value;
+  if (!/^[A-Z0-9_-]{4,24}$/.test(code)) return msg('Kode harus 4–24 karakter: huruf, angka, - atau _.');
+  if (RESERVED.includes(code)) return msg('Kode itu sudah dipakai sebagai kode bawaan game. Pilih kode lain.');
+  const ph = codeHash(code);
+  if (codes.some(c => c.ph === ph)) return msg('Kode itu sudah ada di daftar.');
+  const reward = {}; $('fRewards').querySelectorAll('input').forEach(i => { const v = Math.floor(+i.value); if (v > 0) reward[i.dataset.rw] = Math.min(v, 1e9); });
+  if (!Object.keys(reward).length) return msg('Isi minimal satu hadiah.');
+  const start = $('fStart').value || null, expires = $('fExp').value || null;
+  if (start && expires && expires < start) return msg('Tanggal berakhir harus sesudah tanggal mulai.');
+  $('fSubmit').disabled = true;
+  try {
+    await db.doc('codesecret/' + ph).set({ code, createdAt: Date.now() });
+    await db.doc('codes/' + ph).set({ ph, game, label: ($('fLabel').value || '').trim().slice(0, 40) || 'Hadiah spesial', reward, start, expires, active: true, createdAt: Date.now() });
+    msg('Kode ' + code + ' dibuat dan sudah aktif.', true); $('fCode').value = ''; $('fLabel').value = ''; $('fRewards').querySelectorAll('input').forEach(i => { i.value = ''; }); $('fStart').value = ''; $('fExp').value = '';
+  } catch (err) { msg(err && err.code === 'permission_denied' ? 'Kamu tidak punya izin membuat kode.' : 'Gagal menyimpan kode. Coba lagi.'); }
+  $('fSubmit').disabled = false;
+}
+let delArm = null;
+document.addEventListener('click', async e => {
+  const cp = e.target.closest('[data-copy]');
+  if (cp) { try { await navigator.clipboard.writeText(cp.dataset.copy); cp.textContent = 'Tersalin'; } catch (er) { cp.textContent = cp.dataset.copy; } setTimeout(() => { cp.textContent = 'Salin'; }, 1500); return; }
+  const tg = e.target.closest('[data-toggle]');
+  if (tg && db) { const c = codes.find(x => x.ph === tg.dataset.toggle); if (c) { tg.disabled = true; try { await db.doc('codes/' + c.ph).update({ active: c.active === false }); } catch (er) { tg.disabled = false; } } return; }
+  const dl = e.target.closest('[data-del]');
+  if (dl && db) {
+    if (delArm !== dl.dataset.del) { delArm = dl.dataset.del; dl.textContent = 'Yakin hapus?'; setTimeout(() => { if (delArm === dl.dataset.del) { delArm = null; dl.textContent = 'Hapus'; } }, 3000); return; }
+    delArm = null; dl.disabled = true;
+    try { await db.doc('codes/' + dl.dataset.del).delete(); await db.doc('codesecret/' + dl.dataset.del).delete(); } catch (er) { dl.disabled = false; dl.textContent = 'Hapus'; }
+  }
+});
+$('adminBtn').addEventListener('click', openAdmin);
+$('adminClose').addEventListener('click', closeAdmin);
+$('fGame').addEventListener('change', renderRewardFields);
+$('fRand').addEventListener('click', () => { $('fCode').value = randomCode(); });
+$('codeForm').addEventListener('submit', createCode);
+renderGameSelect(); renderRewardFields();
+initCodes();
+
+render();
+{ const id = location.hash.slice(1); if (GAMES.some(g => g.id === id)) open(id, false); }
+</script>
+
+</body>
+</html>
