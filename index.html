@@ -1,9 +1,4 @@
-<!doctype html>
-<html lang="id">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ruang Main</title>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body><title>Ruang Main</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -136,8 +131,6 @@ header.top { display: flex; align-items: flex-end; justify-content: space-betwee
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
-</head>
-<body>
 <div class="wrap">
   <header class="top">
     <div class="brand">
@@ -191,6 +184,8 @@ header.top { display: flex; align-items: flex-end; justify-content: space-betwee
 
 <script>
 const GAMES = [
+  { id: 'ashen-blade', title: 'Ashen Blade', sub: 'Fantasy Hack & Slash', genre: 'Aksi', file: 'games/ashen-blade.html', thumb: 'thumbs/ashen-blade.jpg',
+    desc: 'Tebas monster di ruang bawah tanah bersama 3 hero. Combo pedang, skill, dash, 3 boss raksasa, berkah tiap ruangan, dan loot perlengkapan.', meta: ['Portrait', '3 hero', 'Boss fight'], added: 7 },
   { id: 'dragon-roost', title: 'Dragon Roost', sub: 'Eldoria', genre: 'Simulasi', file: 'games/dragon-roost.html', thumb: 'thumbs/dragon-roost.jpg',
     desc: 'Bangun pulau terapung, tetaskan telur, dan kawinkan 64 jenis naga dari 10 elemen, termasuk 9 naga legendaris. Adu naga di arena.', meta: ['Portrait', '64 naga', 'Breeding'], added: 6 },
   { id: 'kage-blade', title: 'Kage Blade', sub: 'Stickman Ninja Idle', genre: 'Idle RPG', file: 'games/kage-blade.html', thumb: 'thumbs/kage-blade.jpg',
@@ -252,10 +247,11 @@ window.addEventListener('hashchange', () => { const id = location.hash.slice(1);
 
 /* ---------- Portal redeem codes (shared db) ---------- */
 const CODE_KEY = 'ruangmain.codes';
-const RESERVED = ['KAGEBLADE', 'NINJAWAY', 'SAKURA2026', 'PETGUARD', 'ELDORIAPETS', 'MOONLIGHT', 'ELDORIA', 'WARCHEST', 'SAFEHAVEN', 'DRAGONFIRE', 'WELCOME2026', 'CROWNHOLD', 'ROYALARMY', 'DRAGONROOST', 'HATCHLING', 'WYRMFIRE'];
+const RESERVED = ['KAGEBLADE', 'NINJAWAY', 'SAKURA2026', 'PETGUARD', 'ELDORIAPETS', 'MOONLIGHT', 'ELDORIA', 'WARCHEST', 'SAFEHAVEN', 'DRAGONFIRE', 'WELCOME2026', 'CROWNHOLD', 'ROYALARMY', 'DRAGONROOST', 'HATCHLING', 'WYRMFIRE', 'ASHENBLADE', 'HACKNSLASH', 'DRAGONSLAYER'];
 const REWARDS = {
   all: [['gems', 'Gem'], ['gold', 'Gold']],
   'dragon-roost': [['gems', 'Gem'], ['gold', 'Gold'], ['food', 'Makanan naga']],
+  'ashen-blade': [['gems', 'Gem'], ['gold', 'Gold']],
   'kage-blade': [['gems', 'Gem'], ['gold', 'Gold']],
   'pet-guardians': [['gems', 'Gem'], ['gold', 'Gold'], ['food', 'Makanan pet'], ['commonEgg', 'Telur biasa'], ['mysticEgg', 'Telur mistis']],
   eldoria: [['gems', 'Gem'], ['gold', 'Gold'], ['wood', 'Kayu'], ['stone', 'Batu'], ['food', 'Makanan'], ['runes', 'Rune'], ['xp', 'XP']],
@@ -349,6 +345,4 @@ initCodes();
 render();
 { const id = location.hash.slice(1); if (GAMES.some(g => g.id === id)) open(id, false); }
 </script>
-
-</body>
-</html>
+</body></html>
