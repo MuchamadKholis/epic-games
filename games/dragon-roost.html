@@ -60,7 +60,7 @@ canvas { display: block; }
 .res.gem b { color: #1a6ad0; }
 .round { width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,0.88); border: 2px solid #fff; box-shadow: 0 3px 0 rgba(0,0,0,0.18); font-size: 18px; flex: none; }
 .pill { position: absolute; right: 10px; top: calc(66px + var(--safe-t)); padding: 8px 14px; border-radius: 99px; background: linear-gradient(180deg, #ffd85a, #f0a018); color: #5a2a04; font: 600 14px 'Fredoka', sans-serif; box-shadow: 0 3px 0 #a86008; animation: bounce 1.6s infinite; }
-#dock { position: absolute; left: 8px; right: 8px; bottom: calc(8px + var(--safe-b)); display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding: 6px; border-radius: 22px; background: linear-gradient(180deg, #c8884a, #8a5428); border: 3px solid #e8b878; box-shadow: 0 6px 0 rgba(0,0,0,0.25); }
+#dock { position: absolute; left: 8px; right: 8px; bottom: calc(8px + var(--safe-b)); display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; padding: 6px; border-radius: 22px; background: linear-gradient(180deg, #c8884a, #8a5428); border: 3px solid #e8b878; box-shadow: 0 6px 0 rgba(0,0,0,0.25); }
 #dock button { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 0 5px; border-radius: 15px; background: linear-gradient(180deg, #fff4dc, #f0d8a8); box-shadow: 0 3px 0 #a8703e; }
 #dock button:active { transform: translateY(2px); box-shadow: 0 1px 0 #a8703e; }
 #dock i { font-style: normal; font-size: 24px; line-height: 1.1; }
@@ -132,6 +132,24 @@ input.code { flex: 1; min-width: 0; padding: 10px; border-radius: 12px; border: 
 .float { position: absolute; z-index: 30; pointer-events: none; font: 700 20px 'Fredoka'; color: #fff; text-shadow: 0 2px 0 #7a4c26, 0 0 6px rgba(0,0,0,0.4); animation: rise 1.1s forwards; }
 @keyframes rise { to { transform: translateY(-50px); opacity: 0; } }
 
+/* ---------- feedback pass: move mode, switch, arena, event ---------- */
+#dock i { font-size: 22px; }
+#moveBar { position: absolute; left: 50%; top: calc(64px + var(--safe-t, 0px)); transform: translateX(-50%); z-index: 6; padding: 10px 16px; border-radius: 16px; background: #2a1626; color: #ffe8a8; font: 600 14px 'Fredoka', sans-serif; box-shadow: 0 4px 0 rgba(0,0,0,0.35); white-space: nowrap; animation: mbPulse 1.4s infinite; }
+@keyframes mbPulse { 50% { box-shadow: 0 4px 0 rgba(0,0,0,0.35), 0 0 0 6px rgba(255,210,90,0.35); } }
+.bfoot { margin-top: 10px; justify-content: center; }
+.swaps { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.swaps small { color: #ffe0b8; font: 500 12px 'Fredoka', sans-serif; flex-basis: 100%; }
+.swap { position: relative; width: 64px; height: 56px; border-radius: 14px; background: linear-gradient(180deg, #fff4dc, #f0d8a8); box-shadow: 0 3px 0 #a8703e; overflow: hidden; padding: 0; }
+.swap canvas { width: 100%; height: 100%; }
+.swap i { position: absolute; left: 4px; bottom: 4px; height: 5px; max-width: calc(100% - 8px); border-radius: 3px; background: #5fd17a; }
+.swap.cur { outline: 3px solid #ffd23f; }
+.swap:disabled:not(.cur) { filter: grayscale(0.7) brightness(0.8); }
+.card.done { opacity: 0.6; }
+.arena-top { background: linear-gradient(135deg, #fff4dc, #ffe2a8); }
+.tier-row { padding: 6px 0; border-bottom: 1px dashed rgba(120,70,30,0.25); }
+.tier-row.got b { color: #2f9a4a; } .tier-row.got span::before { content: '✓ '; color: #2f9a4a; }
+.boss-art { height: 170px !important; }
+
 </style>
 </head>
 <body>
@@ -155,11 +173,13 @@ input.code { flex: 1; min-width: 0; padding: 10px; border-radius: 12px; border: 
       <button class="round" id="setBtn" aria-label="Settings">⚙️</button>
     </header>
     <button id="collectAll" class="pill" hidden>🪙 Collect all</button>
+    <button id="moveBar" hidden>📦 Tap an empty spot (＋) to move here · <u>Cancel</u></button>
     <nav id="dock">
       <button data-open="shop"><i>🏪</i><span>Shop</span></button>
       <button data-open="breed"><i>💞</i><span>Breed</span></button>
       <button data-open="book"><i>📖</i><span>Dragons</span></button>
       <button data-open="arena"><i>⚔️</i><span>Arena</span></button>
+      <button data-open="event"><i>🐲</i><span>Event</span></button>
       <button data-open="quests"><i>📜</i><span>Quests</span></button>
     </nav>
   </section>
@@ -167,6 +187,7 @@ input.code { flex: 1; min-width: 0; padding: 10px; border-radius: 12px; border: 
   <section id="fight" hidden>
     <canvas id="fightCv"></canvas>
     <div id="fightUi">
+      <div class="swaps" id="swaps"></div>
       <div class="moves" id="moves"></div>
       <div class="row"><button class="btn small" id="autoFight">Auto: off</button><button class="btn small ghost" id="fleeBtn">Leave</button></div>
     </div>
@@ -334,6 +355,14 @@ DR.CODES = {};
 DR.fmt = n => { n = Math.floor(n); if (n < 10000) return n.toLocaleString('en-US'); const u = ['K', 'M', 'B', 'T']; let i = -1; while (n >= 1000 && i < 3) { n /= 1000; i++; } return (n >= 100 ? n.toFixed(0) : n.toFixed(1)) + u[i]; };
 DR.time = s => { s = Math.max(0, Math.ceil(s)); if (s < 60) return s + 's'; if (s < 3600) return Math.floor(s / 60) + 'm ' + (s % 60 ? (s % 60) + 's' : ''); return Math.floor(s / 3600) + 'h ' + Math.floor(s % 3600 / 60) + 'm'; };
 
+/* ---------------- Daily arena (10 battles a day, refreshable opponents) ---------------- */
+DR.ARENA_DAILY = { tickets: 10, freeRefresh: 3, refreshGems: 5 };
+DR.ARENA_NAMES = ['Pip the Squire', 'Mara of the Reeds', 'Brannoc', 'Lady Vesh', 'Old Torvin', 'Sela Brightwing', 'Kaito the Wanderer', 'Grimgar', 'Iris Moonveil', 'Duke Calder', 'Nyx', 'Hollow Knight Arn', 'Seraphine', 'The Twin Wardens', 'Archmage Olen', 'Queen Ysolde', 'Vorthak', 'High Druid Fen', 'Saint Aurel', 'The Dragon King'];
+DR.ARENA_TIERS = [{ name: 'Easy', lv: -2, r: 0, k: 0.7, gems: 0, col: '#5fd17a' }, { name: 'Normal', lv: 0, r: 0, k: 1, gems: 3, col: '#ffc82e' }, { name: 'Hard', lv: 2, r: 1, k: 1.5, gems: 8, col: '#ff5a4a' }];
+/* ---------------- Colossal dragon event (2 tries a day) ---------------- */
+DR.EVENT = { tries: 2, turns: 12, hpMul: 14, atkMul: 0.85,
+  tiers: [{ at: 0.1, gold: 600 }, { at: 0.25, food: 300 }, { at: 0.5, gems: 15 }, { at: 0.75, gems: 30, egg: 'rare' }, { at: 1, gems: 60, egg: 'epic' }] };
+
 </script>
 <script>
 /* =====================================================================
@@ -377,7 +406,7 @@ DR.State = (function () {
     const s = {
       v: 1, gold: 1500, food: 200, gems: 60, xp: 0, level: 1, nextUid: 1,
       buildings: {}, dragons: {}, eggs: [], breeding: null, zones: 0,
-      seen: {}, arena: { cleared: 0 }, stats: {}, questsDone: {}, day: '', streak: 0, redeemed: [],
+      seen: {}, arena: { cleared: 0, day: '', tickets: 10, refreshes: 3, seed: 1, opps: [] }, event: { day: '', tries: 2, best: 0 }, stats: {}, questsDone: {}, day: '', streak: 0, redeemed: [],
       settings: { sound: true, music: true }, lastSeen: now, created: now,
     };
     s.buildings[0] = { type: 'habitat', el: 'fire', lv: 1, gold: 0, last: now, dragons: [] };
@@ -421,7 +450,8 @@ DR.State = (function () {
     if (Array.isArray(raw.eggs)) d.eggs = raw.eggs.filter(e => e && DR.D[e.id]).slice(0, 4).map(e => ({ uid: String(e.uid), id: e.id, end: num(e.end, now, 0, 1e15) }));
     if (raw.breeding && DR.D[raw.breeding.result]) d.breeding = { a: raw.breeding.a, b: raw.breeding.b, result: raw.breeding.result, end: num(raw.breeding.end, now, 0, 1e15) };
     if (raw.seen) for (const k of Object.keys(raw.seen)) if (DR.D[k]) d.seen[k] = true;
-    if (raw.arena) d.arena.cleared = Math.floor(num(raw.arena.cleared, 0, 0, DR.ARENA.length));
+    if (raw.arena) { const a = raw.arena; d.arena.cleared = Math.floor(num(a.cleared, 0, 0, 1e6)); d.arena.day = typeof a.day === 'string' ? a.day : ''; d.arena.tickets = Math.floor(num(a.tickets, 10, 0, 99)); d.arena.refreshes = Math.floor(num(a.refreshes, 3, 0, 99)); d.arena.seed = Math.floor(num(a.seed, 1, 1, 2147483646)); d.arena.opps = Array.isArray(a.opps) ? a.opps.filter(o => o && Array.isArray(o.team) && o.team.every(m => DR.D[m.id])).slice(0, 3).map(o => ({ name: String(o.name).slice(0, 40), tier: Math.floor(num(o.tier, 0, 0, 2)), team: o.team.slice(0, 3).map(m => ({ id: m.id, lv: Math.floor(num(m.lv, 1, 1, DR.MAX_LEVEL)) })), gold: num(o.gold, 0, 0, 1e9), food: num(o.food, 0, 0, 1e9), gems: num(o.gems, 0, 0, 999), done: !!o.done })) : []; }
+    if (raw.event) { d.event.day = typeof raw.event.day === 'string' ? raw.event.day : ''; d.event.tries = Math.floor(num(raw.event.tries, 2, 0, 9)); d.event.best = num(raw.event.best, 0, 0, 1); }
     if (raw.stats) for (const k of Object.keys(raw.stats)) d.stats[k] = num(raw.stats[k], 0, 0, 1e12);
     if (raw.questsDone) for (const q of DR.QUESTS) d.questsDone[q.id] = !!raw.questsDone[q.id];
     d.day = typeof raw.day === 'string' ? raw.day : ''; d.streak = Math.floor(num(raw.streak, 0, 0, 9999));
@@ -607,15 +637,62 @@ DR.State = (function () {
     return ok({ gems: g });
   }
 
-  /* ---------------- Arena rewards ---------------- */
-  function arenaWin(s, idx, now = Date.now()) {
-    const o = DR.ARENA[idx]; if (!o) return no('Unknown opponent');
-    const first = idx === s.arena.cleared; if (idx > s.arena.cleared) return no('Beat the previous opponent first');
-    const r = { gold: first ? o.gold : Math.round(o.gold * 0.25), food: first ? o.food : Math.round(o.food * 0.25), gems: first ? o.gems : 0, egg: null };
-    s.gold += r.gold; s.food += r.food; s.gems += r.gems; stat(s, 'wins', 1);
-    if (first) { s.arena.cleared++; if (o.egg && eggSpace(s) > 0) { const id = o.egg === 'legend' ? DR.LEGENDS[Math.floor(idx / 10) % DR.LEGENDS.length].id : o.egg; addEgg(s, id, now); r.egg = id; } }
-    r.ups = addXp(s, 30 + idx * 12); return ok(r);
+  /* ---------------- Daily arena ---------------- */
+  const mul = a => () => { a = (a * 16807) % 2147483647; return a / 2147483647; };
+  /** Player strength: average level of the best 3 dragons and best rarity. */
+  function strength(s) { const mine = Object.values(s.dragons).sort((a, b) => b.lv - a.lv), top = mine.slice(0, 3); return { n: Math.max(1, Math.min(3, mine.length)), lv: top.length ? top.reduce((t, x) => t + x.lv, 0) / top.length : 1, r: top.reduce((m, x) => Math.max(m, DR.D[x.id].r), 0), maxLv: mine.length ? mine[0].lv : 1 }; }
+  function genOpps(s) {
+    const st = strength(s), rnd = mul(s.arena.seed = (s.arena.seed * 48271) % 2147483647 || 7), opps = [];
+    DR.ARENA_TIERS.forEach((T, k) => {
+      const lv = Math.max(1, Math.min(DR.MAX_LEVEL, Math.round(st.lv) + T.lv)), cap = Math.min(3, st.r + T.r);
+      const pool = DR.DRAGONS.filter(d => d.r <= cap && (d.kind !== 'legend' || (k === 2 && s.arena.cleared >= 20)));
+      const team = []; for (let j = 0; j < st.n; j++) team.push({ id: pool[Math.floor(rnd() * pool.length)].id, lv: Math.max(1, lv - (st.n - 1 - j)) });
+      opps.push({ name: DR.ARENA_NAMES[Math.floor(rnd() * DR.ARENA_NAMES.length)], tier: k, team, gold: Math.round(120 * Math.pow(1.14, lv) * T.k), food: Math.round(40 * Math.pow(1.1, lv) * T.k), gems: T.gems + (k === 2 ? Math.floor(lv / 4) : 0), done: false });
+    });
+    s.arena.opps = opps;
   }
+  /** Resets tickets and opponents on a new day. */
+  function arenaDaily(s, now = Date.now()) { const d = dayKey(now); if (s.arena.day !== d || !s.arena.opps.length) { if (s.arena.day !== d) { s.arena.day = d; s.arena.tickets = DR.ARENA_DAILY.tickets; s.arena.refreshes = DR.ARENA_DAILY.freeRefresh; } genOpps(s); } }
+  function arenaRefresh(s) { if (s.arena.refreshes > 0) s.arena.refreshes--; else { if (s.gems < DR.ARENA_DAILY.refreshGems) return no('Not enough gems'); s.gems -= DR.ARENA_DAILY.refreshGems; } genOpps(s); return ok(); }
+  function arenaStart(s, oi) { const o = s.arena.opps[oi]; if (!o) return no('Unknown opponent'); if (o.done) return no('Already beaten. Refresh for new opponents'); if (s.arena.tickets <= 0) return no('No battles left today. Come back tomorrow!'); s.arena.tickets--; return ok(); }
+  function arenaWin(s, oi, now = Date.now()) {
+    const o = s.arena.opps[oi]; if (!o) return no('Unknown opponent'); if (o.done) return no('Already beaten');
+    o.done = true; const r = { gold: o.gold, food: o.food, gems: o.gems, egg: null };
+    s.gold += r.gold; s.food += r.food; s.gems += r.gems; stat(s, 'wins', 1); s.arena.cleared++;
+    if (s.arena.cleared % 10 === 0 && eggSpace(s) > 0) { const id = s.arena.cleared === 50 ? 'prismara' : DR.LEGENDS[(s.arena.cleared / 10 - 1) % DR.LEGENDS.length].id; addEgg(s, id, now); r.egg = id; }
+    r.ups = addXp(s, 30 + Math.round(o.team[0].lv * 8)); return ok(r);
+  }
+
+  /* ---------------- Colossal dragon event ---------------- */
+  function eventDaily(s, now = Date.now()) { const d = dayKey(now); if (s.event.day !== d) { s.event.day = d; s.event.tries = DR.EVENT.tries; s.event.best = 0; } }
+  /** Today's colossal boss (a legendary dragon, rotates daily). */
+  function eventBoss(s, now = Date.now()) { const n = Math.floor(now / 86400000), d = DR.LEGENDS[n % DR.LEGENDS.length], lv = Math.min(DR.MAX_LEVEL, strength(s).maxLv + 2); return { id: d.id, lv, name: 'Colossal ' + d.name.replace(' Dragon', ''), hpMul: DR.EVENT.hpMul, atkMul: DR.EVENT.atkMul, boss: true }; }
+  function eventStart(s) { if (s.event.tries <= 0) return no('No tries left today. The colossus returns tomorrow!'); if (!Object.keys(s.dragons).length) return no('You need a dragon'); s.event.tries--; return ok(); }
+  /** Rewards for dealing `frac` (0..1) of the boss HP. All reached tiers pay. */
+  function eventReward(s, frac, now = Date.now()) {
+    const k = 1 + s.level * 0.15, r = { gold: 0, food: 0, gems: 0, eggs: [] };
+    for (const T of DR.EVENT.tiers) if (frac >= T.at - 1e-9) { r.gold += Math.round((T.gold || 0) * k); r.food += Math.round((T.food || 0) * k); r.gems += T.gems || 0; if (T.egg && eggSpace(s) > 0) { const pool = DR.DRAGONS.filter(d => d.kind !== 'legend' && d.r === (T.egg === 'epic' ? 2 : 1)); const id = pool[Math.floor(Math.random() * pool.length)].id; addEgg(s, id, now); r.eggs.push(id); } }
+    s.gold += r.gold; s.food += r.food; s.gems += r.gems; s.event.best = Math.max(s.event.best, frac);
+    r.ups = addXp(s, Math.round(40 + frac * 120)); return ok(r);
+  }
+
+  /* ---------------- Move / remove buildings ---------------- */
+  function moveBuilding(s, from, to) {
+    const b = s.buildings[from]; if (!b) return no('Nothing to move'); if (from === to) return no('Pick a different spot');
+    if (s.buildings[to]) return no('That spot is taken'); if (!plotOpen(s, to)) return no('That land is still under the clouds');
+    s.buildings[to] = b; delete s.buildings[from];
+    if (b.dragons) for (const u of b.dragons) if (s.dragons[u]) s.dragons[u].home = to;
+    return ok();
+  }
+  function demolish(s, i) {
+    const b = s.buildings[i]; if (!b) return no('Nothing here'); if (b.type !== 'habitat' && b.type !== 'farm') return no('This building cannot be removed');
+    if (b.type === 'habitat' && b.dragons.length) return no('Move or sell the dragons living here first');
+    delete s.buildings[i]; const refund = Math.round(buildCost(s, b.type, b.el).gold * 0.3); s.gold += refund;
+    if (b.type === 'habitat' && b.gold >= 1) s.gold += Math.floor(b.gold);
+    return ok({ refund });
+  }
+  /** First free open plot (for building straight from the shop). */
+  function freePlot(s) { const free = DR.PLOTS.filter(p => p.zone <= s.zones && !s.buildings[p.i]); if (!free.length) return -1; free.sort((a, b) => Math.hypot(a.x - 600, a.y - 440) - Math.hypot(b.x - 600, b.y - 440)); return free[0].i; }
 
   /* ---------------- Redeem ---------------- */
   function redeem(s, code, now = Date.now()) {
@@ -629,7 +706,7 @@ DR.State = (function () {
   /** Gold that piled up while away (for the welcome-back note). */
   function idleGold(s, now = Date.now()) { let t = 0; for (const k in s.buildings) { const b = s.buildings[k]; if (b.type !== 'habitat') continue; const dt = Math.max(0, now - b.last) / 60000; t += Math.min(DR.HABITAT.store(b.lv), b.gold + rate(s, b) * dt) - b.gold; } return Math.floor(t); }
 
-  return { defaults, validate, load, save, tick, rate, collect, collectAll, habitatCount, farmCount, plotOpen, buildCost, build, upgradeHabitat, upgradeHatchery, expand, plant, harvest, feed, homesFor, moveDragon, sellDragon, hatchery, eggSpace, buyEgg, breedTable, rollChild, startBreed, collectBreed, hatch, sellEgg, speedUp, arenaWin, addXp, questProgress, claimQuest, claimDaily, dailyReady, redeem, idleGold, addDragon, dayKey };
+  return { strength, genOpps, arenaDaily, arenaRefresh, arenaStart, eventDaily, eventBoss, eventStart, eventReward, moveBuilding, demolish, freePlot, defaults, validate, load, save, tick, rate, collect, collectAll, habitatCount, farmCount, plotOpen, buildCost, build, upgradeHabitat, upgradeHatchery, expand, plant, harvest, feed, homesFor, moveDragon, sellDragon, hatchery, eggSpace, buyEgg, breedTable, rollChild, startBreed, collectBreed, hatch, sellEgg, speedUp, arenaWin, addXp, questProgress, claimQuest, claimDaily, dailyReady, redeem, idleGold, addDragon, dayKey };
 })();
 
 </script>
@@ -659,12 +736,13 @@ DR.Battle = (function () {
     if (d.els.some(x => DR.STRONG[x].includes(el))) m *= 0.7;
     return m;
   }
-  function unit(id, lv) { const d = DR.D[id], st = DR.stats(d, lv); return { id, d, lv, hp: st.hp, max: st.hp, atk: st.atk, cds: [0, 0, 0], moves: moves(d) }; }
+  function unit(id, lv, o) { const d = DR.D[id], st = DR.stats(d, lv), hp = Math.round(st.hp * ((o && o.hpMul) || 1)); return { id, d, lv, hp, max: hp, atk: Math.round(st.atk * ((o && o.atkMul) || 1)), cds: [0, 0, 0], moves: moves(d), boss: !!(o && o.boss) }; }
   function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
   class Battle {
-    constructor(teamA, teamB, seed) {
-      this.A = teamA.map(x => unit(x.id, x.lv)); this.B = teamB.map(x => unit(x.id, x.lv));
+    constructor(teamA, teamB, seed, opts) {
+      this.A = teamA.map(x => unit(x.id, x.lv)); this.B = teamB.map(x => unit(x.id, x.lv, x));
+      this.turnLimit = (opts && opts.turnLimit) || 0; this.dealt = 0;
       this.ia = 0; this.ib = 0; this.rand = mulberry(seed != null ? seed : Date.now() & 0xffffffff); this.over = null; this.turn = 0;
     }
     get a() { return this.A[this.ia]; } get b() { return this.B[this.ib]; }
@@ -672,29 +750,38 @@ DR.Battle = (function () {
     hit(att, def, i) {
       const mv = att.moves[i], m = mult(mv.el, def.d), crit = this.rand() < 0.08;
       const dmg = Math.max(1, Math.round(att.atk * mv.pow * m * (0.9 + this.rand() * 0.2) * (crit ? 1.5 : 1)));
-      def.hp = Math.max(0, def.hp - dmg); att.cds[i] = mv.cd;
+      const real = Math.min(def.hp, dmg); def.hp = Math.max(0, def.hp - dmg); att.cds[i] = mv.cd; if (this.A.includes(att)) this.dealt += real;
       return { move: mv, dmg, mult: m, crit, fainted: def.hp <= 0 };
     }
     /** AI: the move with the best expected damage. */
     pick(att, def) { let best = 0, bv = -1; att.moves.forEach((mv, i) => { if (att.cds[i] > 0) return; const v = mv.pow * mult(mv.el, def.d); if (v > bv) { bv = v; best = i; } }); return best; }
-    /** Plays one round: the player's move, then the enemy's. Returns events in order. */
+    nextAlive(team, from) { for (let k = 0; k < team.length; k++) { const j = (from + k) % team.length; if (team[j].hp > 0) return j; } return -1; }
+    /** Can the player switch to dragon j right now? */
+    canSwap(j) { return !this.over && j !== this.ia && this.A[j] && this.A[j].hp > 0; }
+    /**
+     * Plays one round: the player's action, then the enemy's. action = move
+     * index, or { swap: j } to switch dragons (the enemy then attacks).
+     */
     round(i) {
       if (this.over) return [];
-      if (!this.canUse(this.a, i)) i = 0;
       const ev = []; this.turn++;
+      const swapping = i && typeof i === 'object' && i.swap != null;
+      if (swapping) { if (!this.canSwap(i.swap)) return []; this.ia = i.swap; ev.push({ side: 'swap', team: 'A', idx: this.ia, id: this.a.id, manual: true }); }
+      else if (!this.canUse(this.a, i)) i = 0;
       const step = (side) => {
         const att = side === 'A' ? this.a : this.b, def = side === 'A' ? this.b : this.a;
         const k = side === 'A' ? i : this.pick(att, def);
         const r = this.hit(att, def, k); ev.push(Object.assign({ side, att: att.id, def: def.id }, r));
         att.cds = att.cds.map((c, j) => j === k ? c : Math.max(0, c - 1));
         if (r.fainted) {
-          if (side === 'A') { this.ib++; if (this.ib >= this.B.length) { this.over = 'win'; ev.push({ side: 'end', result: 'win' }); return false; } ev.push({ side: 'swap', team: 'B', id: this.b.id }); }
-          else { this.ia++; if (this.ia >= this.A.length) { this.over = 'lose'; ev.push({ side: 'end', result: 'lose' }); return false; } ev.push({ side: 'swap', team: 'A', id: this.a.id }); }
+          if (side === 'A') { const j = this.nextAlive(this.B, this.ib); if (j < 0) { this.over = 'win'; ev.push({ side: 'end', result: 'win' }); return false; } this.ib = j; ev.push({ side: 'swap', team: 'B', idx: j, id: this.b.id }); }
+          else { const j = this.nextAlive(this.A, this.ia); if (j < 0) { this.over = 'lose'; ev.push({ side: 'end', result: 'lose' }); return false; } this.ia = j; ev.push({ side: 'swap', team: 'A', idx: j, id: this.a.id }); }
           return false;
         }
         return true;
       };
-      if (step('A')) step('B');
+      if (swapping) step('B'); else if (step('A')) step('B');
+      if (!this.over && this.turnLimit && this.turn >= this.turnLimit) { this.over = 'timeout'; ev.push({ side: 'end', result: 'timeout' }); }
       return ev;
     }
     /** Auto-play to the end (tests and quick resolve). */
@@ -1252,7 +1339,7 @@ DR.Island = (function () {
   }
   /* ---------------- Camera & picking ---------------- */
   function toWorld(cv, sx, sy) { const W = cv.clientWidth, H = cv.clientHeight; return [(sx - W / 2) / cam.z + cam.x, (sy - H / 2) / cam.z + cam.y]; }
-  function pick(cv, sx, sy) { const [x, y] = toWorld(cv, sx, sy); let best = null, bd = 1e9; for (const p of DR.PLOTS) { const d = Math.hypot((x - p.x) / 80, (y - (p.y - 30)) / 70); if (d < 1 && d < bd) { bd = d; best = p.i; } } return best; }
+  function pick(cv, sx, sy) { const [x, y] = toWorld(cv, sx, sy); let best = null, bd = 1e9; for (const p of DR.PLOTS) { const d = Math.hypot((x - p.x) / 96, (y - (p.y - 42)) / 92); if (d < 1 && d < bd) { bd = d; best = p.i; } } return best; }
   function clampCam(cv) { const W = cv.clientWidth, H = cv.clientHeight; const minZ = Math.min(W / 1300, H / 1000) * 0.85; cam.z = Math.max(minZ, Math.min(1.6, cam.z)); cam.x = Math.max(100, Math.min(1100, cam.x)); cam.y = Math.max(120, Math.min(820, cam.y)); }
   function fit(cv) { const W = cv.clientWidth, H = cv.clientHeight; cam.z = Math.max(Math.min(W / 640, H / 700), 0.45); cam.x = 600; cam.y = 440; clampCam(cv); }
   function focus(cv, plot) { const p = DR.PLOTS[plot]; cam.x = p.x; cam.y = p.y - 40; clampCam(cv); }
@@ -1284,7 +1371,7 @@ DR.BattleView = (function () {
     const e = queue.shift(); if (!e) return;
     if (e.side === 'done') { e.cb && e.cb(); return next(); }
     if (e.side === 'end') { anim = { kind: 'end', t: 0, dur: 0.6, e }; return; }
-    if (e.side === 'swap') { anim = { kind: 'swap', t: 0, dur: 0.7, e }; if (e.team === 'A') { view.ia++; view.hpA = view.battle.A[view.ia].hp; view.fadeA = 0; view.enterA = 0; } else { view.ib++; view.hpB = view.battle.B[view.ib].hp; view.fadeB = 0; view.enterB = 0; } return; }
+    if (e.side === 'swap') { anim = { kind: 'swap', t: 0, dur: 0.7, e }; if (e.team === 'A') { view.ia = e.idx != null ? e.idx : view.ia + 1; view.hpA = view.battle.A[view.ia].hp; view.fadeA = 0; view.enterA = 0; } else { view.ib = e.idx != null ? e.idx : view.ib + 1; view.hpB = view.battle.B[view.ib].hp; view.fadeB = 0; view.enterB = 0; } return; }
     anim = { kind: 'attack', t: 0, dur: e.move.el === 'storm' || e.move.el === 'light' || e.move.el === 'legend' ? 1.0 : 1.15, e, hit: false };
     DR.UI && DR.UI.sfx && DR.UI.sfx('atk_' + e.move.el);
   }
@@ -1350,7 +1437,8 @@ DR.BattleView = (function () {
     const [x0, y] = POS[side], flip = side === 'B', x = x0 + (1 - enter) * (side === 'A' ? -160 : 160);
     if (!u) return null;
     c.save(); if (fade > 0) { c.globalAlpha = 1 - fade; c.translate(x, y); c.rotate((side === 'A' ? -1 : 1) * fade * 0.8); c.translate(-x, -y + fade * 10); }
-    const m = DR.Art.draw(c, u.id, x + (side === 'A' ? 1 : -1) * atk * 14, y, 46, { t: t + (side === 'A' ? 0 : 2), lv: u.lv, flip, atk, hit, fly: u.d.els.includes('storm') || u.d.kind === 'legend' });
+    if (u.boss) { c.save(); c.globalCompositeOperation = 'lighter'; A.glow(c, x, y - 40, 120, '255,90,60', 0.25 + Math.sin(t * 2) * 0.06); c.restore(); }
+    const m = DR.Art.draw(c, u.id, x + (side === 'A' ? 1 : -1) * atk * 14 + (u.boss ? 8 : 0), y + (u.boss ? 6 : 0), u.boss ? 60 : 46, { t: t + (side === 'A' ? 0 : 2), lv: u.lv, flip, atk, hit, fly: u.d.els.includes('storm') || u.d.kind === 'legend' });
     c.restore(); return m;
   }
   function plate(c, u, hp, x, y, align, team, idx) {
@@ -1443,7 +1531,19 @@ DR.BattleView = (function () {
   const rarTag = d => '<span class="tag rar' + d.r + '">' + DR.RARITY[d.r].name + '</span>';
   const elTags = d => d.els.map(e => '<span class="tag">' + DR.EL[e].icon + ' ' + DR.EL[e].name + '</span>').join(' ');
   /** Re-renders the open panel (after a state change). */
-  function refresh() { if (!app.panel) return; const st = $('panel').scrollTop; open(app.panel.kind, app.panel.arg, true); $('panel').scrollTop = st; }
+  let pressT = 0, pressing = false;
+  $('sheet').addEventListener('pointerdown', () => { pressing = true; pressT = performance.now(); }, true);
+  ['pointerup', 'pointercancel'].forEach(ev => document.addEventListener(ev, () => { pressing = false; pressT = performance.now(); }, true));
+  /** Re-renders the open panel. Timed refreshes skip while a finger is down, so taps are never lost. */
+  function refresh(timed) {
+    if (!app.panel) return;
+    if (timed && (pressing || performance.now() - pressT < 700)) return;
+    const html = PANELS[app.panel.kind](app.panel.arg);
+    if (timed && html === app.lastHtml) return;
+    const st = $('panel').scrollTop; app.lastHtml = html;
+    if (!$('sheet').hidden) { $('panel').innerHTML = html; paint($('panel')); } else open(app.panel.kind, app.panel.arg, true);
+    $('panel').scrollTop = st;
+  }
 
   /* ---------------- Title ---------------- */
   function titleLoop() {
@@ -1475,15 +1575,17 @@ DR.BattleView = (function () {
   const world = $('world'); const ptrs = new Map(); let drag = null, pinch = null;
   function resize() { const r = world.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1); world.width = Math.round(r.width * dpr); world.height = Math.round(r.height * dpr); DR.Island.clampCam(world); }
   window.addEventListener('resize', () => { if (app.started) resize(); });
-  world.addEventListener('pointerdown', e => { world.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]); if (ptrs.size === 1) drag = { x: e.clientX, y: e.clientY, cx: DR.Island.cam.x, cy: DR.Island.cam.y, moved: 0 }; else if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), z: DR.Island.cam.z }; drag = null; } });
+  world.addEventListener('pointerdown', e => { world.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]); if (ptrs.size === 1) drag = { x: e.clientX, y: e.clientY, cx: DR.Island.cam.x, cy: DR.Island.cam.y, moved: 0, t0: performance.now() }; else if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), z: DR.Island.cam.z }; drag = null; } });
   world.addEventListener('pointermove', e => { if (!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId, [e.clientX, e.clientY]); const cam = DR.Island.cam;
     if (pinch && ptrs.size >= 2) { const [a, b] = [...ptrs.values()]; cam.z = pinch.z * Math.hypot(a[0] - b[0], a[1] - b[1]) / pinch.d; DR.Island.clampCam(world); }
     else if (drag) { const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.moved = Math.max(drag.moved, Math.abs(dx) + Math.abs(dy)); cam.x = drag.cx - dx / cam.z; cam.y = drag.cy - dy / cam.z; DR.Island.clampCam(world); } });
-  const endPtr = e => { const wasDrag = drag && drag.moved < 8 && ptrs.size === 1; ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null; if (wasDrag && e.type === 'pointerup') { const r = world.getBoundingClientRect(); tapWorld(e.clientX - r.left, e.clientY - r.top, e.clientX, e.clientY); } if (!ptrs.size) drag = null; };
+  const endPtr = e => { const wasDrag = drag && ptrs.size === 1 && (drag.moved < 16 || (drag.moved < 30 && performance.now() - drag.t0 < 260)); ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null; if (wasDrag && e.type === 'pointerup') { const r = world.getBoundingClientRect(); tapWorld(e.clientX - r.left, e.clientY - r.top, e.clientX, e.clientY); } if (!ptrs.size) drag = null; };
   world.addEventListener('pointerup', endPtr); world.addEventListener('pointercancel', endPtr);
   world.addEventListener('wheel', e => { e.preventDefault(); DR.Island.cam.z *= e.deltaY > 0 ? 0.9 : 1.1; DR.Island.clampCam(world); }, { passive: false });
   function tapWorld(x, y, cx, cy) {
-    const i = DR.Island.pick(world, x, y); if (i == null) return;
+    const i = DR.Island.pick(world, x, y);
+    if (app.moveFrom != null) { if (i == null) return; const r = S.moveBuilding(app.s, app.moveFrom, i); if (!r.ok) return fail(r); sfx('build'); toast('Moved!'); setMove(null); persist(true); return; }
+    if (i == null) return;
     const s = app.s, p = DR.PLOTS[i], b = s.buildings[i]; sfx('tap');
     if (p.zone > s.zones) return open('shop', 'expand');
     if (!b) return open('build', i);
@@ -1493,6 +1595,9 @@ DR.BattleView = (function () {
     if (b.type === 'breed') { if (s.breeding && nowMs() >= s.breeding.end) { const r = S.collectBreed(s); if (r.ok) { sfx('breed'); toast('A new egg is in the hatchery!'); persist(true); return; } return fail(r); } return open('breed'); }
     if (b.type === 'arena') return open('arena');
   }
+  /* Move mode: tap an empty spot to relocate a building. */
+  function setMove(i) { app.moveFrom = i; $('moveBar').hidden = i == null; DR.Island.moving = i; }
+  $('moveBar').addEventListener('click', () => { setMove(null); toast('Move cancelled'); });
   document.getElementById('dock').addEventListener('click', e => { const b = e.target.closest('[data-open]'); if (b) { sfx('tap'); open(b.dataset.open); } });
   $('setBtn').addEventListener('click', () => { sfx('tap'); open('settings'); });
   $('collectAll').addEventListener('click', e => { const r = S.collectAll(app.s); if (!r.ok) return fail(r); sfx('coin'); floatText('+' + fmt(r.gold) + ' 🪙', e.clientX, e.clientY); persist(); });
@@ -1505,6 +1610,7 @@ DR.BattleView = (function () {
     else modal(html, e => click(e));
   }
   const PANELS = {};
+  const bFoot = (i, canRemove) => '<div class="acts bfoot"><button class="btn ghost small" data-act="moveB" data-i="' + i + '">📦 Move</button>' + (canRemove ? '<button class="btn ghost small" data-act="removeB" data-i="' + i + '">🗑️ Remove</button>' : '') + '</div>';
   const dragonCard = (x, extra) => { const d = DR.D[x.id]; return '<div class="card dcard"><canvas data-dragon="' + x.id + ':' + x.lv + '"></canvas><div class="info"><b>' + d.name + '</b><small>Lv ' + x.lv + ' · ' + fmt(DR.goldRate(d, x.lv)) + ' 🪙/min</small><div>' + rarTag(d) + ' ' + elTags(d) + '</div></div>' + (extra || '') + '</div>'; };
   PANELS.habitat = i => {
     const s = app.s, b = s.buildings[i], E = DR.EL[b.el]; S.tick(s);
@@ -1515,7 +1621,7 @@ DR.BattleView = (function () {
       h += dragonCard(x, '<div class="acts" style="flex-direction:column">' + (x.lv < DR.MAX_LEVEL ? '<button class="btn green small" data-act="feed" data-u="' + u + '">Feed 🍖' + fmt(c) + '</button>' : '<span class="tag">MAX</span>') + '<button class="btn ghost small" data-act="dragon" data-u="' + u + '">More</button></div>'); }
     if (!b.dragons.length) h += '<p class="sub">No dragons live here yet. Hatch a ' + E.name + ' egg, or move a dragon in.</p>';
     if (b.lv < 3) h += '<button class="btn" data-act="upHab" data-i="' + i + '" style="width:100%">Upgrade: ' + DR.HABITAT.cap(b.lv + 1) + ' dragons, ' + fmt(DR.HABITAT.store(b.lv + 1)) + ' storage · 🪙' + fmt(Math.round(DR.HABITAT.upCost(b.lv) * (1 + E.i * 0.4))) + '</button>';
-    return h;
+    return h + bFoot(i, true);
   };
   PANELS.dragon = u => {
     const s = app.s, x = s.dragons[u]; if (!x) return head('Dragon') + '<p class="sub">This dragon is gone.</p>';
@@ -1532,7 +1638,7 @@ DR.BattleView = (function () {
       h += '<div class="card"><div class="row"><span style="font-size:34px">' + c.icon + '</span><div class="grow"><b>' + c.name + '</b><div class="bar green"><i style="width:' + prog * 100 + '%"></i><span>' + (left > 0 ? DR.time(left) : 'Ready!') + '</span></div><small class="sub">+' + fmt(c.food) + ' 🍖</small></div></div></div>';
       h += left > 0 ? '<button class="btn purple" data-act="speed" data-k="farm" data-r="' + i + '" style="width:100%">Finish now · 💎' + DR.speedCost(left) + '</button>' : '<button class="btn green" data-act="harvest" data-i="' + i + '" style="width:100%">Harvest</button>';
     } else { h += '<p class="sub">Choose a crop to plant.</p>'; for (const c of DR.CROPS) { const lock = s.level < c.lv; h += '<div class="card row' + (lock ? ' locked' : '') + '"><span style="font-size:30px">' + c.icon + '</span><div class="grow"><b>' + c.name + '</b><br><small class="sub">+' + fmt(c.food) + ' 🍖 in ' + DR.time(c.time) + (lock ? ' · level ' + c.lv : '') + '</small></div><button class="btn gold small' + (lock ? ' off' : '') + '" data-act="plant" data-i="' + i + '" data-c="' + c.id + '">🪙' + fmt(c.cost) + '</button></div>'; } }
-    return h;
+    return h + bFoot(i, true);
   };
   PANELS.hatchery = i => {
     const s = app.s, b = s.buildings[i], cap = DR.HATCHERY_CAP(b.lv);
@@ -1542,7 +1648,7 @@ DR.BattleView = (function () {
       h += '<div class="card row"><canvas data-egg="' + e.id + '" style="width:56px;height:62px"></canvas><div class="grow"><b>' + (known || left <= 0 ? d.name : 'Mystery ' + DR.RARITY[d.r].name + ' egg') + '</b><br>' + rarTag(d) + ' ' + (left > 0 ? '<small class="sub">Hatches in ' + DR.time(left) + '</small>' : '<small style="color:var(--green2)">Ready to hatch!</small>') + '</div>' +
         (left > 0 ? '<button class="btn purple small" data-act="speed" data-k="egg" data-r="' + e.uid + '">💎' + DR.speedCost(left) + '</button>' : '<button class="btn green small" data-act="hatchPick" data-e="' + e.uid + '">Hatch</button>') + '</div>'; }
     if (b.lv < 3) h += '<button class="btn ghost" data-act="upHatch" data-i="' + i + '" style="width:100%;margin-top:4px">Upgrade to ' + DR.HATCHERY_CAP(b.lv + 1) + ' egg slots · 🪙' + fmt(DR.HATCHERY_UP(b.lv)) + '</button>';
-    return h;
+    return h + bFoot(i, false);
   };
   PANELS.hatchPick = eu => {
     const s = app.s, e = s.eggs.find(x => x.uid === eu); if (!e) return head('Hatch') + '<p class="sub">Egg not found.</p>';
@@ -1577,11 +1683,12 @@ DR.BattleView = (function () {
     const fc = S.buildCost(s, 'farm'); h += '<button class="tile" data-act="build" data-i="' + i + '" data-t="farm"><div style="font-size:30px">🌾</div><b>Farm</b><small>🪙' + fmt(fc.gold) + '</small></button></div>';
     return h;
   };
+  { const inner = PANELS.breed; PANELS.breed = () => { const k = Object.keys(app.s.buildings).find(k2 => app.s.buildings[k2].type === 'breed'); return inner() + (k != null ? bFoot(+k, false) : ''); }; }
   let shopTab = 'eggs';
   PANELS.shop = tab => {
     const s = app.s; if (tab) shopTab = tab; let h = head('🏪 Shop') + '<div class="tabs">' + [['eggs', '🥚 Eggs'], ['habitats', '🏠 Habitats'], ['expand', '🏝️ Expand'], ['gems', '💎 Trade']].map(([k, n]) => '<button data-tab="' + k + '" class="' + (shopTab === k ? 'on' : '') + '">' + n + '</button>').join('') + '</div>';
     if (shopTab === 'eggs') { h += '<p class="sub">Eggs go to your hatchery (' + s.eggs.length + '/' + DR.HATCHERY_CAP((S.hatchery(s) || { lv: 1 }).lv) + ').</p><div class="grid">'; for (const E of DR.ELEMENTS) { const lock = s.level < E.lv, p = DR.eggPrice(E.id); h += '<button class="tile' + (lock ? ' locked' : '') + '" data-act="buyEgg" data-el="' + E.id + '"><canvas data-egg="' + E.id + '"></canvas><b>' + E.name + ' egg</b><small>' + (lock ? '🔒 Level ' + E.lv : p.gold ? '🪙' + fmt(p.gold) : '💎' + p.gems) + '</small></button>'; } h += '</div>'; }
-    if (shopTab === 'habitats') { h += '<p class="sub">Tap an empty spot (＋) on your island to build. Costs now:</p><div class="grid">'; for (const E of DR.ELEMENTS) { const lock = s.level < E.lv; h += '<div class="tile' + (lock ? ' locked' : '') + '"><div style="font-size:28px">' + E.icon + '</div><b>' + E.name + '</b><small>' + (lock ? '🔒 Level ' + E.lv : '🪙' + fmt(S.buildCost(s, 'habitat', E.id).gold)) + '</small></div>'; } h += '<div class="tile"><div style="font-size:28px">🌾</div><b>Farm</b><small>🪙' + fmt(S.buildCost(s, 'farm').gold) + '</small></div></div>'; }
+    if (shopTab === 'habitats') { const fp = S.freePlot(s); h += '<p class="sub">' + (fp < 0 ? '⚠️ No empty spot. Expand the island or remove a building.' : 'Tap to build on the nearest empty spot. You can move it later.') + '</p><div class="grid">'; for (const E of DR.ELEMENTS) { const lock = s.level < E.lv; h += '<button class="tile' + (lock ? ' locked' : '') + '" data-act="buildAny" data-t="habitat" data-el="' + E.id + '"><div style="font-size:28px">' + E.icon + '</div><b>' + E.name + '</b><small>' + (lock ? '🔒 Level ' + E.lv : '🪙' + fmt(S.buildCost(s, 'habitat', E.id).gold)) + '</small></button>'; } h += '<button class="tile" data-act="buildAny" data-t="farm"><div style="font-size:28px">🌾</div><b>Farm</b><small>🪙' + fmt(S.buildCost(s, 'farm').gold) + '</small></button></div>'; }
     if (shopTab === 'expand') { const z = s.zones, free = DR.PLOTS.filter(p => p.zone <= z && !s.buildings[p.i]).length; h += '<div class="card"><b>Island size: ' + (z + 1) + ' / 6</b><p class="sub" style="margin:4px 0 0">' + free + ' empty building spot' + (free === 1 ? '' : 's') + ' right now.</p></div>'; if (z < 5) h += '<button class="btn gold' + (s.level < DR.EXPAND_LEVEL(z) ? ' off' : '') + '" data-act="expand" style="width:100%">Clear the clouds: +' + DR.PLOTS.filter(p => p.zone === z + 1).length + ' spots · 🪙' + fmt(DR.EXPAND_COST(z)) + (s.level < DR.EXPAND_LEVEL(z) ? ' (level ' + DR.EXPAND_LEVEL(z) + ')' : '') + '</button>'; else h += '<p class="sub">Your island is fully expanded!</p>'; }
     if (shopTab === 'gems') { const packs = [[10, 'gold', 1000 + s.level * 200], [30, 'gold', 3500 + s.level * 700], [10, 'food', 400 + s.level * 80], [30, 'food', 1400 + s.level * 280]]; h += '<p class="sub">Gems are earned by playing: arena, quests, level-ups and daily gifts.</p>'; packs.forEach(([g, k, v], j) => { h += '<div class="card row"><span style="font-size:28px">' + (k === 'gold' ? '🪙' : '🍖') + '</span><div class="grow"><b>' + fmt(v) + ' ' + k + '</b></div><button class="btn purple small" data-act="trade" data-j="' + j + '">💎' + g + '</button></div>'; }); app.packs = packs; }
     return h;
@@ -1603,15 +1710,25 @@ DR.BattleView = (function () {
       '<div class="card"><div class="row"><span class="grow">🪙 ' + fmt(DR.goldRate(d, 1)) + '–' + fmt(DR.goldRate(d, 20)) + '/min</span><span class="grow">🥚 Hatch ' + DR.time(DR.hatchTime(d.r)) + '</span></div></div>';
   };
   PANELS.arena = () => {
-    const s = app.s; let h = head('⚔️ Arena <span class="tag">' + s.arena.cleared + '/' + DR.ARENA.length + '</span>') + '<p class="sub">Beat each challenger to climb the ladder. First wins give gems and legendary eggs every 10 steps.</p>';
-    DR.ARENA.forEach((o, i) => { if (i > s.arena.cleared + 2) return; const lock = i > s.arena.cleared, done = i < s.arena.cleared;
-      h += '<div class="card"><div class="row"><div class="grow"><b>' + (i + 1) + '. ' + esc(o.name) + '</b> ' + (done ? '<span class="tag">✓ Beaten</span>' : '') + '<div class="row" style="gap:4px;margin-top:4px">' + o.team.map(m => '<canvas data-dragon="' + m.id + ':' + m.lv + '" style="width:54px;height:46px;border-radius:9px"></canvas>').join('') + '</div><small class="sub">Lv ' + o.team.map(m => m.lv).join('/') + ' · Reward 🪙' + fmt(done ? o.gold * 0.25 : o.gold) + (o.gems && !done ? ' 💎' + o.gems : '') + (o.egg && !done ? ' 🥚' : '') + '</small></div>' +
-        '<button class="btn ' + (lock ? 'ghost off' : done ? 'ghost' : 'red') + ' small" data-act="pickTeam" data-o="' + i + '">' + (lock ? '🔒' : done ? 'Rematch' : 'Fight') + '</button></div></div>'; });
+    const s = app.s; S.arenaDaily(s); const A = s.arena, next = Math.ceil((A.cleared + 1) / 10) * 10;
+    let h = head('⚔️ Arena') + '<div class="card row arena-top"><div class="grow"><b>🎫 ' + A.tickets + ' / ' + DR.ARENA_DAILY.tickets + ' battles left today</b><small class="sub">Resets every day · Wins: ' + A.cleared + ' · 🥚 Legendary egg at ' + next + ' wins</small></div></div>';
+    A.opps.forEach((o, i) => { const T = DR.ARENA_TIERS[o.tier];
+      h += '<div class="card' + (o.done ? ' done' : '') + '"><div class="row"><div class="grow"><b>' + esc(o.name) + '</b> <span class="tag" style="background:' + T.col + ';color:#1a0f1e">' + T.name + '</span> ' + (o.done ? '<span class="tag">✓ Beaten</span>' : '') + '<div class="row" style="gap:4px;margin-top:4px">' + o.team.map(m => '<canvas data-dragon="' + m.id + ':' + m.lv + '" style="width:54px;height:46px;border-radius:9px"></canvas>').join('') + '</div><small class="sub">Lv ' + o.team.map(m => m.lv).join('/') + ' · 🪙' + fmt(o.gold) + ' 🍖' + fmt(o.food) + (o.gems ? ' 💎' + o.gems : '') + '</small></div>' +
+        '<button class="btn ' + (o.done || !A.tickets ? 'ghost off' : 'red') + ' small" data-act="pickTeam" data-o="' + i + '">' + (o.done ? '✓' : 'Fight') + '</button></div></div>'; });
+    h += '<button class="btn purple" data-act="arenaRefresh" style="width:100%">🔄 New opponents · ' + (A.refreshes > 0 ? A.refreshes + ' free left' : '💎' + DR.ARENA_DAILY.refreshGems) + '</button>';
+    h += '<button class="btn gold" data-go="event" style="width:100%;margin-top:8px">🐲 Colossal Dragon event</button>';
+    return h;
+  };
+  PANELS.event = () => {
+    const s = app.s; S.eventDaily(s); const B = S.eventBoss(s), d = DR.D[B.id];
+    let h = head('🐲 ' + esc(B.name)) + '<canvas class="hero-art boss-art" data-dragon="' + B.id + ':' + B.lv + '"></canvas><p class="sub" style="text-align:center">A colossal ' + d.els.map(e => DR.EL[e].icon + ' ' + DR.EL[e].name).join(' / ') + ' dragon attacks! You have ' + DR.EVENT.turns + ' turns. The more damage you deal, the better the reward. New boss every day.</p>';
+    h += '<div class="card"><b>Rewards by damage dealt</b>' + DR.EVENT.tiers.map(T => { const got = s.event.best >= T.at - 1e-9; return '<div class="row tier-row' + (got ? ' got' : '') + '"><span class="grow">' + Math.round(T.at * 100) + '% HP' + (T.at === 1 ? ' (defeat it!)' : '') + '</span><b>' + [T.gold ? '🪙' + fmt(T.gold * (1 + s.level * 0.15)) : '', T.food ? '🍖' + fmt(T.food * (1 + s.level * 0.15)) : '', T.gems ? '💎' + T.gems : '', T.egg ? '🥚 ' + (T.egg === 'epic' ? 'Epic' : 'Rare') : ''].filter(Boolean).join(' ') + '</b></div>'; }).join('') + '<small class="sub">Today\'s best: ' + Math.round(s.event.best * 100) + '%</small></div>';
+    h += '<button class="btn red" data-act="pickTeam" data-o="event" style="width:100%"' + (s.event.tries ? '' : ' disabled') + '>⚔️ Fight · ' + s.event.tries + '/' + DR.EVENT.tries + ' tries today</button>';
     return h;
   };
   let team = [];
   PANELS.team = oi => {
-    const s = app.s, o = DR.ARENA[oi], mine = Object.values(s.dragons).sort((a, b) => b.lv - a.lv);
+    const s = app.s, o = oi === 'event' ? { name: S.eventBoss(s).name, team: [S.eventBoss(s)] } : s.arena.opps[oi], mine = Object.values(s.dragons).sort((a, b) => b.lv - a.lv);
     team = team.filter(u => s.dragons[u]).slice(0, 3); if (!team.length) team = mine.slice(0, Math.min(3, mine.length)).map(x => x.uid);
     let h = head('Pick your team') + '<p class="sub">Up to 3 dragons vs ' + esc(o.name) + ' (' + o.team.map(m => DR.D[m.id].els.map(e => DR.EL[e].icon).join('')).join(' ') + '). Element advantages deal 1.5× damage.</p>';
     h += '<div class="grid">' + mine.map(x => { const d = DR.D[x.id], k = team.indexOf(x.uid); return '<button class="tile pick' + (k >= 0 ? ' sel' : '') + '" data-act="tsel" data-u="' + x.uid + '" data-o="' + oi + '"><canvas data-dragon="' + x.id + ':' + x.lv + '"></canvas><b>' + d.name.replace(' Dragon', '') + '</b><small>Lv ' + x.lv + ' ' + d.els.map(e => DR.EL[e].icon).join('') + '</small>' + (k >= 0 ? '<span class="corner">' + (k + 1) + '</span>' : '') + '</button>'; }).join('') + '</div>';
@@ -1664,9 +1781,13 @@ DR.BattleView = (function () {
       case 'expand': r = S.expand(s); if (!r.ok) return fail(r); sfx('build'); toast('The clouds part… new land!'); levelUps(r.ups); break;
       case 'trade': { const [g, k, v] = app.packs[+D.j]; if (s.gems < g) return fail({ reason: 'Not enough gems' }); s.gems -= g; s[k] += v; sfx('coin'); toast('+' + fmt(v) + ' ' + k); break; }
       case 'info': sfx('tap'); return open('info', D.d);
-      case 'pickTeam': if (+D.o > s.arena.cleared) return fail({ reason: 'Beat the previous challenger first' }); sfx('tap'); return open('team', +D.o);
-      case 'tsel': { const k = team.indexOf(D.u); if (k >= 0) team.splice(k, 1); else if (team.length < 3) team.push(D.u); else return fail({ reason: 'Up to 3 dragons' }); sfx('tap'); return open('team', +D.o, true); }
-      case 'fight': close(); return startFight(+D.o);
+      case 'pickTeam': { const oi = D.o === 'event' ? 'event' : +D.o; if (oi === 'event' ? !s.event.tries : (!s.arena.opps[oi] || s.arena.opps[oi].done || !s.arena.tickets)) return fail({ reason: oi === 'event' ? 'No tries left today' : s.arena.tickets ? 'Already beaten' : 'No battles left today' }); sfx('tap'); return open('team', oi); }
+      case 'arenaRefresh': r = S.arenaRefresh(s); if (!r.ok) return fail(r); sfx('tap'); toast('New challengers arrived!'); break;
+      case 'buildAny': { const i = S.freePlot(s); if (i < 0) return fail({ reason: 'No empty spot. Expand the island or remove a building' }); r = S.build(s, i, D.t, D.el); if (!r.ok) return fail(r); sfx('build'); persist(true); levelUps(r.ups); close(); DR.Island.focus(world, i); toast((D.t === 'farm' ? 'Farm' : DR.EL[D.el].name + ' habitat') + ' built!'); return; }
+      case 'moveB': close(); setMove(+D.i); sfx('tap'); return;
+      case 'removeB': if (a.dataset.armed !== '1') { a.dataset.armed = '1'; a.textContent = 'Tap again to remove'; return; } r = S.demolish(s, +D.i); if (!r.ok) return fail(r); sfx('coin'); toast('Removed · refund 🪙' + fmt(r.refund)); persist(true); return close();
+      case 'tsel': { const k = team.indexOf(D.u); if (k >= 0) team.splice(k, 1); else if (team.length < 3) team.push(D.u); else return fail({ reason: 'Up to 3 dragons' }); sfx('tap'); return open('team', D.o === 'event' ? 'event' : +D.o, true); }
+      case 'fight': close(); return startFight(D.o === 'event' ? 'event' : +D.o);
       case 'daily': r = S.claimDaily(s); if (!r.ok) return fail(r); sfx('level'); toast('Day ' + r.day + ': 💎' + r.gems + ' 🪙' + fmt(r.gold) + ' 🍖' + fmt(r.food)); break;
       case 'quest': r = S.claimQuest(s, D.q); if (!r.ok) return fail(r); sfx('level'); toast('+' + r.gems + ' gems'); break;
       case 'tg': s.settings[D.k] = !s.settings[D.k]; if (D.k === 'music') s.settings.music ? DR.Audio.startMusic() : DR.Audio.stopMusic(); sfx('tap'); break;
@@ -1678,9 +1799,10 @@ DR.BattleView = (function () {
 
   /* ---------------- Arena fight ---------------- */
   function startFight(oi) {
-    const s = app.s, o = DR.ARENA[oi]; const mine = team.map(u => s.dragons[u]).filter(Boolean).map(x => ({ id: x.id, lv: x.lv }));
+    const s = app.s, ev = oi === 'event'; const mine = team.map(u => s.dragons[u]).filter(Boolean).map(x => ({ id: x.id, lv: x.lv }));
     if (!mine.length) return fail({ reason: 'Pick at least one dragon' });
-    const b = new DR.Battle.Battle(mine, o.team);
+    const r0 = ev ? S.eventStart(s) : S.arenaStart(s, oi); if (!r0.ok) return fail(r0); persist(true);
+    const b = ev ? new DR.Battle.Battle(mine, [S.eventBoss(s)], undefined, { turnLimit: DR.EVENT.turns }) : new DR.Battle.Battle(mine, s.arena.opps[oi].team);
     app.fight = { b, oi, auto: false, waiting: false };
     DR.BattleView.start(b); $('fight').hidden = false; sfx('roar'); renderMoves();
   }
@@ -1688,7 +1810,10 @@ DR.BattleView = (function () {
     const f = app.fight; if (!f) return; const u = f.b.A[Math.min(f.b.ia, f.b.A.length - 1)];
     $('moves').innerHTML = u.moves.map((m, i) => { const E = DR.EL[m.el], col = E ? E.c1 : '#ffb02e', dk = E ? E.dk : '#a86008', cd = u.cds[i], vs = DR.Battle.mult(m.el, f.b.b.d); return '<button class="move' + (u.moves.length === 3 && i === 2 ? ' wide' : '') + '" data-mv="' + i + '"' + (cd > 0 || f.waiting || f.b.over ? ' disabled' : '') + ' style="background:linear-gradient(180deg,' + col + ',' + dk + ')">' + (E ? E.icon : '🌟') + ' ' + m.name + '<small>' + (cd > 0 ? 'Ready in ' + cd + ' turn' + (cd > 1 ? 's' : '') : 'Power ' + Math.round(m.pow * 100) + '%' + (vs > 1 ? ' · Super effective!' : vs < 1 ? ' · Weak' : '')) + '</small></button>'; }).join('');
     $('autoFight').textContent = 'Auto: ' + (f.auto ? 'on' : 'off');
+    $('swaps').innerHTML = f.b.A.length > 1 ? f.b.A.map((x, j) => '<button class="swap' + (j === f.b.ia ? ' cur' : '') + '" data-sw="' + j + '"' + (!f.b.canSwap(j) || f.waiting ? ' disabled' : '') + '><canvas data-dragon="' + x.id + ':' + x.lv + '"></canvas><i style="width:' + Math.round(x.hp / x.max * 100) + '%"></i></button>').join('') + '<small>' + (f.oi === 'event' ? 'Turn ' + f.b.turn + '/' + DR.EVENT.turns + ' · ' : '') + 'Tap a dragon to switch (uses your turn)</small>' : (f.oi === 'event' ? '<small>Turn ' + f.b.turn + '/' + DR.EVENT.turns + '</small>' : '');
+    paint($('swaps'));
   }
+  $('swaps').addEventListener('click', e => { const b = e.target.closest('[data-sw]'); if (!b || b.disabled) return; const f = app.fight; if (!f || f.waiting) return; sfx('tap'); doRound({ swap: +b.dataset.sw }); });
   $('moves').addEventListener('click', e => { const b = e.target.closest('[data-mv]'); if (!b || b.disabled) return; doRound(+b.dataset.mv); });
   function doRound(i) {
     const f = app.fight; if (!f || f.waiting || f.b.over) return;
@@ -1697,11 +1822,13 @@ DR.BattleView = (function () {
     DR.BattleView.play(ev, () => { f.waiting = false; if (f.b.over) return setTimeout(() => endFight(), 500); renderMoves(); if (f.auto) setTimeout(() => app.fight === f && doRound(f.b.pick(f.b.a, f.b.b)), 300); });
   }
   $('autoFight').addEventListener('click', () => { const f = app.fight; if (!f) return; f.auto = !f.auto; sfx('tap'); renderMoves(); if (f.auto && !f.waiting) doRound(f.b.pick(f.b.a, f.b.b)); });
-  $('fleeBtn').addEventListener('click', () => { if (!app.fight) return; if (app.fight.b.over) return endFight(); app.fight = null; $('fight').hidden = true; toast('You left the arena'); });
+  $('fleeBtn').addEventListener('click', () => { const f = app.fight; if (!f) return; if (f.b.over) return endFight(); if (f.oi === 'event') { f.b.over = 'timeout'; return endFight(); } app.fight = null; $('fight').hidden = true; toast('You left the arena'); });
   function endFight() {
     const f = app.fight; if (!f) return; app.fight = null; $('fight').hidden = true;
-    if (f.b.over === 'win') { const r = S.arenaWin(app.s, f.oi); sfx('win'); persist(true);
-      modal('<div class="ph"><h2>🏆 Victory!</h2></div><p class="sub">You defeated ' + esc(DR.ARENA[f.oi].name) + '.</p><div class="big-reward"><span>🪙 ' + fmt(r.gold) + '</span><span>🍖 ' + fmt(r.food) + '</span>' + (r.gems ? '<span>💎 ' + r.gems + '</span>' : '') + '</div>' + (r.egg ? '<canvas data-egg="' + r.egg + '" style="width:80px;height:90px;margin:0 auto"></canvas><p class="sub">A ' + DR.RARITY[DR.D[r.egg].r].name + ' egg was sent to your hatchery!</p>' : '') + '<button class="btn gold" data-close style="width:100%">Collect</button>', null, true); levelUps(r.ups);
+    if (f.oi === 'event') { const frac = Math.min(1, f.b.dealt / f.b.B[0].max), r = S.eventReward(app.s, frac); sfx(frac >= 1 ? 'win' : 'coin'); persist(true);
+      modal('<div class="ph"><h2>' + (frac >= 1 ? '🏆 Colossus defeated!' : '🐲 ' + Math.round(frac * 100) + '% damage') + '</h2></div><p class="sub">' + (frac >= 1 ? 'Legendary effort!' : 'Raise and feed stronger dragons to deal more damage.') + ' Tries left today: ' + app.s.event.tries + '</p><div class="big-reward">' + (r.gold ? '<span>🪙 ' + fmt(r.gold) + '</span>' : '') + (r.food ? '<span>🍖 ' + fmt(r.food) + '</span>' : '') + (r.gems ? '<span>💎 ' + r.gems + '</span>' : '') + (!r.gold && !r.food && !r.gems ? '<span>No reward (deal 10%+)</span>' : '') + '</div>' + r.eggs.map(id => '<canvas data-egg="' + id + '" style="width:70px;height:80px;margin:0 auto"></canvas>').join('') + (r.eggs.length ? '<p class="sub">Egg sent to your hatchery!</p>' : '') + '<button class="btn gold" data-close style="width:100%">Collect</button>', null, true); levelUps(r.ups); return; }
+    if (f.b.over === 'win') { const name = app.s.arena.opps[f.oi] ? app.s.arena.opps[f.oi].name : 'the challenger'; const r = S.arenaWin(app.s, f.oi); sfx('win'); persist(true);
+      modal('<div class="ph"><h2>🏆 Victory!</h2></div><p class="sub">You defeated ' + esc(name) + '.</p><div class="big-reward"><span>🪙 ' + fmt(r.gold) + '</span><span>🍖 ' + fmt(r.food) + '</span>' + (r.gems ? '<span>💎 ' + r.gems + '</span>' : '') + '</div>' + (r.egg ? '<canvas data-egg="' + r.egg + '" style="width:80px;height:90px;margin:0 auto"></canvas><p class="sub">A ' + DR.RARITY[DR.D[r.egg].r].name + ' egg was sent to your hatchery!</p>' : '') + '<button class="btn gold" data-close style="width:100%">Collect</button>', null, true); levelUps(r.ups);
     } else { sfx('lose'); modal('<div class="ph"><h2>Defeat</h2></div><p class="sub">Feed your dragons to raise their level, and pick elements that are strong against your opponent.</p><button class="btn" data-close style="width:100%">OK</button>', null, true); }
   }
 
@@ -1720,7 +1847,7 @@ DR.BattleView = (function () {
       if (app.fight) { const cv = $('fightCv'), r = cv.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1); if (cv.width !== Math.round(r.width * dpr)) { cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); } DR.BattleView.draw(cv, dt); }
       else { const r = world.getBoundingClientRect(); if (world.width !== Math.round(r.width * Math.min(2, window.devicePixelRatio || 1))) resize(); DR.Island.draw(world, app.s, t, now); }
       hudT -= dt; if (hudT <= 0) { hudT = 0.25; hud(); }
-      panelT -= dt; if (panelT <= 0) { panelT = 1; if (app.panel && ['farm', 'hatchery', 'breed', 'habitat'].includes(app.panel.kind) && !$('sheet').hidden) refresh(); persist(); }
+      panelT -= dt; if (panelT <= 0) { panelT = 1; if (app.panel && ['farm', 'hatchery', 'breed', 'habitat', 'arena', 'event'].includes(app.panel.kind) && !$('sheet').hidden) refresh(true); persist(); }
     } catch (e) { console.error('[Dragon Roost]', e); }
     requestAnimationFrame(loop);
   }

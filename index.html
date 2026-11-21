@@ -1,4 +1,5 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body><title>Ruang Main</title>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Ruang Main</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -185,9 +186,9 @@ header.top { display: flex; align-items: flex-end; justify-content: space-betwee
 <script>
 const GAMES = [
   { id: 'ashen-blade', title: 'Ashen Blade', sub: 'Fantasy Hack & Slash', genre: 'Aksi', file: 'games/ashen-blade.html', thumb: 'thumbs/ashen-blade.jpg',
-    desc: 'Tebas monster di ruang bawah tanah bersama 3 hero. Combo pedang, skill, dash, 3 boss raksasa, berkah tiap ruangan, dan loot perlengkapan.', meta: ['Portrait', '3 hero', 'Boss fight'], added: 7 },
+    desc: 'Hack & slash fantasi dengan 6 hero: Knight, Berserker, Spellblade, Archer, Mage, dan Necromancer. Lawan iblis, daki Tower Conquest untuk gem, kumpulkan senjata dan armor hingga Mythic, dan bertarung bersama pet.', meta: ['Portrait', '6 hero', 'Tower & Pet'], added: 7 },
   { id: 'dragon-roost', title: 'Dragon Roost', sub: 'Eldoria', genre: 'Simulasi', file: 'games/dragon-roost.html', thumb: 'thumbs/dragon-roost.jpg',
-    desc: 'Bangun pulau terapung, tetaskan telur, dan kawinkan 64 jenis naga dari 10 elemen, termasuk 9 naga legendaris. Adu naga di arena.', meta: ['Portrait', '64 naga', 'Breeding'], added: 6 },
+    desc: 'Bangun pulau terapung, tetaskan telur, dan kawinkan 64 jenis naga dari 10 elemen, termasuk 9 naga legendaris. Arena harian dan event naga raksasa setiap hari.', meta: ['Portrait', '64 naga', 'Event harian'], added: 6 },
   { id: 'kage-blade', title: 'Kage Blade', sub: 'Stickman Ninja Idle', genre: 'Idle RPG', file: 'games/kage-blade.html', thumb: 'thumbs/kage-blade.jpg',
     desc: 'Ninja stickman bertarung sendiri melewati 7 region Jepang. Latih statistik, summon pedang dan skill, taklukkan dungeon, lalu ascend.', meta: ['Portrait', 'Auto-battle', 'Speed 2×'], added: 5 },
   { id: 'pet-guardians', title: 'Pet Guardians', sub: 'Eldoria', genre: 'Tower Defense', file: 'games/pet-guardians.html', thumb: 'thumbs/pet-guardians.jpg',
@@ -345,4 +346,5 @@ initCodes();
 render();
 { const id = location.hash.slice(1); if (GAMES.some(g => g.id === id)) open(id, false); }
 </script>
+
 </body></html>

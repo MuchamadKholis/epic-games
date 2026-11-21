@@ -55,7 +55,8 @@ h1, h2, h3, .serif { font-family: 'Cinzel', Georgia, 'Times New Roman', serif; l
 .tier { flex: none; padding: 7px 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); font-weight: 800; font-size: 0.85rem; white-space: nowrap; }
 .tier.on { background: linear-gradient(#5a1a2a, #3a0e1a); border-color: #ff7a5a; color: #ffd0c0; }
 .tier.locked { opacity: 0.4; }
-.nav { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.nav { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+.nav button { font-size: 0.72rem; padding: 7px 2px; }
 .nav button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; border-radius: 12px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); font-weight: 800; font-size: 0.8rem; }
 .nav button span { font-size: 1.4rem; line-height: 1; }
 .nav .dot { position: relative; } .nav .dot::after { content: ''; position: absolute; top: 6px; right: 22%; width: 9px; height: 9px; border-radius: 50%; background: var(--red); }
@@ -192,6 +193,17 @@ h1, h2, h3, .serif { font-family: 'Cinzel', Georgia, 'Times New Roman', serif; l
 .pacts .btn { min-height: 36px; padding: 6px 10px; font-size: 0.85rem; }
 @media (max-width: 380px) { .nav button { font-size: 0.7rem; } }
 
+/* ---------- tower & shop ---------- */
+.tower-cur { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 16px; background: linear-gradient(135deg, rgba(120, 40, 60, 0.45), rgba(20, 10, 30, 0.7)); border: 1px solid rgba(255, 120, 90, 0.5); }
+.tower-cur.champ { border-color: var(--gold); box-shadow: 0 0 18px rgba(232, 184, 74, 0.35); }
+.tower-cur canvas { width: 84px; height: 84px; flex: none; }
+.tower-cur .tx { flex: 1; min-width: 0; } .tower-cur .tx b { display: block; font-family: 'Cinzel', Georgia, serif; color: #ffd0c0; font-size: 1.02rem; } .tower-cur small { display: block; color: #e4d0c8; font-weight: 700; font-size: 0.8rem; margin-top: 2px; }
+.tower-cur .rw { display: flex; gap: 6px; margin-top: 6px; }
+.tw-floor { width: 54px; flex: none; text-align: center; padding: 6px 0; border-radius: 12px; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--line); }
+.tw-floor small { display: block; font-size: 0.6rem; letter-spacing: 0.15em; color: var(--muted); font-weight: 900; } .tw-floor b { font-family: 'Cinzel', Georgia, serif; font-size: 1.6rem; color: var(--gold2); line-height: 1; }
+.tw-row.done { opacity: 0.55; } .tw-row.cur { border-color: rgba(255, 120, 90, 0.6); background: rgba(120, 40, 60, 0.25); }
+.shop-row .btn { min-width: 86px; }
+
 </style>
 </head>
 <body>
@@ -220,7 +232,8 @@ h1, h2, h3, .serif { font-family: 'Cinzel', Georgia, 'Times New Roman', serif; l
         <button data-sheet="forge"><span>⚒</span>Forge</button>
         <button data-sheet="pets"><span>🐾</span>Pets</button>
         <button data-sheet="upgrades"><span>⬆</span>Upgrades</button>
-        <button data-sheet="codex"><span>📜</span>Codex</button>
+        <button data-sheet="dungeon"><span>🏰</span>Dungeon</button>
+        <button data-sheet="shop"><span>🛒</span>Shop</button>
         <button data-sheet="more"><span>⚙</span>More</button>
       </div>
     </div>
@@ -540,6 +553,27 @@ AB.CODES = {
   DRAGONSLAYER: { gems: 300, label: 'For the brave' },
 };
 
+/* ---------------- Tower Conquest (boss dungeon) ---------------- */
+AB.TOWER = {
+  bosses: ['orcWarlord', 'frostWyrm', 'demonLord'],
+  /** Floor n (1-based): which boss, how strong, what it pays on first clear. */
+  floor(n) {
+    const i = (n - 1) % 3, champion = n % 5 === 0;
+    return { n, boss: this.bosses[i], act: i, champion, escorts: n >= 4 ? Math.min(4, 1 + Math.floor(n / 6)) : 0,
+      hpMul: 0.62 * Math.pow(1.2, n - 1) * (champion ? 1.4 : 1), dmgMul: 0.75 * Math.pow(1.11, n - 1) * (champion ? 1.2 : 1),
+      gems: Math.round((15 + n * 5) * (champion ? 3 : 1)), gold: 150 * n };
+  },
+};
+/* ---------------- Shop ---------------- */
+AB.SHOP = {
+  chests: {
+    rare: { name: 'Rare Chest', icon: '🧰', cost: 60, min: 2, boost: 0.5, desc: 'Rare gear or better for your hero' },
+    epic: { name: 'Epic Chest', icon: '💜', cost: 180, min: 3, boost: 0.9, desc: 'Epic gear or better' },
+    legend: { name: 'Legendary Chest', icon: '👑', cost: 450, min: 4, boost: 1.6, desc: 'Legendary gear, small Mythic chance' },
+  },
+  gold: { small: { gems: 50, gold: 2500 }, big: { gems: 200, gold: 12000 } },
+};
+
 </script>
 <script>
 /* =====================================================================
@@ -565,7 +599,7 @@ AB.State = (function () {
       v: C.VERSION, gold: 200, gems: 0, hero: 'knight', heroes: { knight: true },
       upgrades: {}, inv: [], equip: emptyEquip(), pets: {}, pet: null,
       best: { act: 0, tier: 0 }, tier: 0, maxTier: 0, runs: 0, kills: 0, bossKills: 0,
-      redeemed: [], settings: { sound: true, shake: true }, seenIntro: false,
+      redeemed: [], settings: { sound: true, shake: true, gfx: 'auto' }, seenIntro: false, tower: { floor: 1 }, lastGift: '',
     };
   }
   /** Upgrades an older save to the current layout. */
@@ -581,6 +615,7 @@ AB.State = (function () {
     s.equip = Object.assign(emptyEquip(), s.equip || {});
     for (const h of AB.HERO_ORDER) s.equip[h] = Object.assign({ weapon: null, armor: null, charm: null }, s.equip[h] || {});
     s.pets = s.pets || {}; if (s.pet && !s.pets[s.pet]) s.pet = null;
+    s.tower = Object.assign({ floor: 1 }, s.tower || {});
     for (const g of s.inv) { g.plus = g.plus || 0; if (g.skin == null) g.skin = g.rarity; }
     return s;
   }
@@ -695,6 +730,13 @@ AB.State = (function () {
 
   /* ---------- run rewards ---------- */
   function finishRun(s, r) {
+    if (r.mode === 'tower') {
+      s.gold += Math.round(r.gold); s.gems += r.gems || 0; s.kills += r.kills || 0; s.bossKills += r.bosses || 0;
+      for (const g of r.loot || []) addGear(s, g);
+      r.reward = null;
+      if (r.cleared && r.floor === s.tower.floor) { const F = AB.TOWER.floor(r.floor); s.gems += F.gems; s.gold += F.gold; s.tower.floor++; r.reward = { gems: F.gems, gold: F.gold }; }
+      return;
+    }
     s.runs++; s.gold += Math.round(r.gold); s.gems += r.gems || 0; s.kills += r.kills || 0; s.bossKills += r.bosses || 0;
     for (const g of r.loot || []) addGear(s, g);
     for (let i = 0; i < (r.eggs || 0); i++) summonPet(s, true);
@@ -702,6 +744,21 @@ AB.State = (function () {
     if (prog > s.best.tier * 10 + s.best.act) s.best = { act: r.act, tier: s.tier || 0 };
     if (r.cleared && (s.tier || 0) >= s.maxTier) s.maxTier = (s.tier || 0) + 1;
   }
+
+  /* ---------- shop ---------- */
+  const today = () => new Date().toISOString().slice(0, 10);
+  const giftReady = s => s.lastGift !== today();
+  const giftValue = s => ({ gold: 300 * (1 + s.maxTier) + 60 * (s.tower.floor - 1), gems: 10 });
+  function claimGift(s) { if (!giftReady(s)) return null; const g = giftValue(s); s.gold += g.gold; s.gems += g.gems; s.lastGift = today(); return g; }
+  /** Power level used for shop gear. */
+  const shopLevel = s => Math.max(1, Math.round(1 + s.best.act * 1.5 + s.maxTier * 4 + (s.tower.floor - 1) * 0.4));
+  function buyChest(s, kind, heroId) {
+    const C2 = AB.SHOP.chests[kind]; if (!C2 || s.gems < C2.cost) return null;
+    s.gems -= C2.cost;
+    const rar = Math.max(C2.min, rollRarity(C2.boost)), slot = U.pick(['weapon', 'weapon', 'armor', 'armor', 'charm']);
+    return addGear(s, makeGear(shopLevel(s), rar, slot, heroId || s.hero));
+  }
+  function buyGold(s, pack) { const P = AB.SHOP.gold[pack]; if (!P || s.gems < P.gems) return false; s.gems -= P.gems; s.gold += P.gold; return true; }
 
   /* ---------- redeem ---------- */
   function hashCode(str) { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) >>> 0; return h.toString(36); }
@@ -720,7 +777,7 @@ AB.State = (function () {
     return { ok: true, label: label || 'Gift', got };
   }
 
-  return { SLOTS, fresh, migrate, load, save, upLevel, upCost, buyUpgrade, gearById, equipOf, equipped, isEquippedAny, canEquip, mainVal, affixVal, gearStats, petBuff, heroStats, power, rollRarity, makeGear, gearScore, salvageValue, maxPlus, upgradeCost, upgradeGear, addGear, equip, unequip, salvage, salvageAll, autoEquip, hasUpgradeFor, unlockHero, petLevelCost, levelPet, summonPet, setPet, finishRun, redeem };
+  return { giftReady, giftValue, claimGift, shopLevel, buyChest, buyGold, SLOTS, fresh, migrate, load, save, upLevel, upCost, buyUpgrade, gearById, equipOf, equipped, isEquippedAny, canEquip, mainVal, affixVal, gearStats, petBuff, heroStats, power, rollRarity, makeGear, gearScore, salvageValue, maxPlus, upgradeCost, upgradeGear, addGear, equip, unequip, salvage, salvageAll, autoEquip, hasUpgradeFor, unlockHero, petLevelCost, levelPet, summonPet, setPet, finishRun, redeem };
 })();
 
 </script>
@@ -801,7 +858,18 @@ AB.Art = (function () {
   const poly = (c, p, f) => { c.beginPath(); c.moveTo(p[0], p[1]); for (let i = 2; i < p.length; i += 2) c.lineTo(p[i], p[i + 1]); c.closePath(); ink(c, f); c.fillStyle = f; c.fill(); };
   const line = (c, a, b, d, e, col, w) => { c.beginPath(); c.moveTo(a, b); c.lineTo(d, e); c.lineCap = 'round'; if (INK && !String(col).startsWith('rgba')) { c.strokeStyle = INKC; c.lineWidth = w + INK * 1.7; c.stroke(); } c.strokeStyle = col; c.lineWidth = w; c.stroke(); };
   const rrect = (c, x, y, w, h, r, f) => { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); ink(c, f); c.fillStyle = f; c.fill(); };
-  function glow(c, x, y, r, rgb, a) { const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, 'rgba(' + rgb + ',' + a + ')'); g.addColorStop(1, 'rgba(' + rgb + ',0)'); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); }
+  /* Pre-rendered gradient sprites: far cheaper than building a gradient per call. */
+  const SPR = new Map();
+  function sprite(key, stops) {
+    let cv = SPR.get(key); if (cv) return cv;
+    cv = document.createElement('canvas'); cv.width = cv.height = 64; const x = cv.getContext('2d'), g = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+    for (const [o, col] of stops) g.addColorStop(o, col); x.fillStyle = g; x.fillRect(0, 0, 64, 64); SPR.set(key, cv); return cv;
+  }
+  function glow(c, x, y, r, rgb, a) {
+    if (!(r > 0) || !(a > 0) || typeof document === 'undefined') return;
+    const sp = sprite('g' + rgb, [[0, 'rgba(' + rgb + ',1)'], [1, 'rgba(' + rgb + ',0)']]), pa = c.globalAlpha;
+    c.globalAlpha = pa * Math.min(1, a); c.drawImage(sp, x - r, y - r, r * 2, r * 2); c.globalAlpha = pa;
+  }
   function rgbOf(col) { if (col[0] === '#') { const n = col.length === 4 ? '#' + col[1] + col[1] + col[2] + col[2] + col[3] + col[3] : col; return [parseInt(n.slice(1, 3), 16), parseInt(n.slice(3, 5), 16), parseInt(n.slice(5, 7), 16)]; } const m = col.match(/\d+(\.\d+)?/g); return m ? m.slice(0, 3).map(Number) : [128, 128, 128]; }
   const shC = new Map();
   function sh(col, k) { const key = col + k; let v = shC.get(key); if (v) return v; const [r, g, b] = rgbOf(col), t = k > 0 ? 255 : 0, a = Math.abs(k); v = 'rgb(' + Math.round(r + (t - r) * a) + ',' + Math.round(g + (t - g) * a) + ',' + Math.round(b + (t - b) * a) + ')'; shC.set(key, v); return v; }
@@ -1345,7 +1413,9 @@ AB.Art = (function () {
     const sideWall = (x0, y0, w, h, edge) => { c.fillStyle = lgr(c, x0, 0, x0 + w, 0, edge === 'r' ? [sh(wc, -0.65), sh(wc, -0.4)] : [sh(wc, -0.4), sh(wc, -0.65)]); c.fillRect(x0, y0, w, h); c.fillStyle = 'rgba(255,255,255,0.1)'; if (edge === 'l') c.fillRect(x0 + w - 3, y0, 3, h); else if (edge === 'r') c.fillRect(x0, y0, 3, h); else c.fillRect(x0, y0, w, 3); for (let yy = y0 + 20; yy < y0 + h; yy += 36) { c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(x0, yy, w, 2); } };
     sideWall(0, wallTop, side, Hh - wallTop, 'l'); sideWall(W - side, wallTop, side, Hh - wallTop, 'r');
     c.fillStyle = lgr(c, 0, Hh - side, 0, Hh, [sh(wc, -0.4), sh(wc, -0.7)]); c.fillRect(0, Hh - side, W, side); c.fillStyle = 'rgba(255,255,255,0.1)'; c.fillRect(0, Hh - side, W, 3);
-    return { floor: cv, emit: ecv, lights };
+    c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'lighter'; c.drawImage(ecv, 0, 0); c.globalCompositeOperation = 'source-over';
+    ecv.width = ecv.height = 1;
+    return { floor: cv, emit: null, lights };
   }
   /** Wall torch flame (animated, drawn each frame). */
   function torchFlame(c, x, y, t, rgbHot) {
@@ -1355,17 +1425,18 @@ AB.Art = (function () {
     c.fillStyle = rgbHot === '140,210,255' ? '#e0f6ff' : '#ffe08a'; c.beginPath(); c.moveTo(x - 3, y); c.quadraticCurveTo(x - 3, y - 6, x + f2 * 0.5, y - 12 - f * 0.6); c.quadraticCurveTo(x + 3, y - 6, x + 3, y); c.closePath(); c.fill();
   }
   /** Soft contact shadow. */
-  function shadow(c, x, y, rx, ry, a = 0.42) { const g = c.createRadialGradient(x, y, 0, x, y, rx); g.addColorStop(0, 'rgba(0,0,0,' + a + ')'); g.addColorStop(0.6, 'rgba(0,0,0,' + a * 0.6 + ')'); g.addColorStop(1, 'rgba(0,0,0,0)'); c.save(); c.translate(x, y); c.scale(1, ry / rx); c.translate(-x, -y); c.fillStyle = g; c.beginPath(); c.arc(x, y, rx, 0, TAU); c.fill(); c.restore(); }
+  function shadow(c, x, y, rx, ry, a = 0.42) { const sp = sprite('shadow', [[0, 'rgba(0,0,0,1)'], [0.6, 'rgba(0,0,0,0.6)'], [1, 'rgba(0,0,0,0)']]), pa = c.globalAlpha; c.globalAlpha = pa * a; c.drawImage(sp, x - rx, y - ry, rx * 2, ry * 2); c.globalAlpha = pa; }
   /** Darkness overlay with light holes. lc = light canvas, k = world->light px scale. */
-  function lightPass(lc, tint, lights, k, ox, oy) {
-    const l = lc.getContext('2d');
-    l.setTransform(1, 0, 0, 1, 0, 0); l.globalCompositeOperation = 'source-over'; l.clearRect(0, 0, lc.width, lc.height); l.fillStyle = tint; l.fillRect(0, 0, lc.width, lc.height);
+  function lightPass(lc, tint, lights, k, ox, oy, vignette) {
+    const l = lc.getContext('2d'), hole = sprite('hole', [[0, 'rgba(255,255,255,1)'], [0.5, 'rgba(255,255,255,0.6)'], [1, 'rgba(255,255,255,0)']]);
+    l.setTransform(1, 0, 0, 1, 0, 0); l.globalCompositeOperation = 'copy'; l.fillStyle = tint; l.fillRect(0, 0, lc.width, lc.height);
     l.globalCompositeOperation = 'destination-out';
     l.setTransform(k, 0, 0, k, -ox * k, -oy * k);
-    for (const L of lights) { const g = l.createRadialGradient(L.x, L.y, 0, L.x, L.y, L.r); g.addColorStop(0, 'rgba(0,0,0,' + Math.min(1, L.i || 1) + ')'); g.addColorStop(0.5, 'rgba(0,0,0,' + Math.min(1, (L.i || 1) * 0.6) + ')'); g.addColorStop(1, 'rgba(0,0,0,0)'); l.fillStyle = g; l.beginPath(); l.arc(L.x, L.y, L.r, 0, TAU); l.fill(); }
+    for (const L of lights) { l.globalAlpha = Math.min(1, L.i || 1); l.drawImage(hole, L.x - L.r, L.y - L.r, L.r * 2, L.r * 2); }
+    l.globalAlpha = 1; l.setTransform(1, 0, 0, 1, 0, 0);
+    if (vignette) { l.globalCompositeOperation = 'source-over'; const vs = sprite('vig', [[0, 'rgba(0,0,0,0)'], [0.62, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,0.7)']]); const d = Math.hypot(lc.width, lc.height) * 0.62; l.drawImage(vs, lc.width / 2 - d, lc.height / 2 - d, d * 2, d * 2); }
     l.globalCompositeOperation = 'source-over';
   }
-
   function door(c, x, y, open, t) {
     const T = AB.CONFIG.TILE;
     c.save();
@@ -1547,8 +1618,10 @@ AB.Run = (function () {
       this.look = AB.Art.composeLook(heroId, eqA, eqW && AB.State.canEquip(eqW, heroId) ? eqW : null);
       this.p.burnT = 0; this.p.burnDps = 0; this.eggs = 0; this.allies = []; this.rains = [];
       this.petE = st.pet ? { id: st.pet.id, level: st.pet.level, x: 0, y: 0, t: 0, atkCd: 1, atk: 0, facing: 1, moving: false, healT: 4 } : null;
+      if (opts.tower) st.tier = 0;
       this.tierMul = Math.pow(1.85, st.tier); this.tierDmg = Math.pow(1.45, st.tier);
-      this.act = 0; this.roomIdx = 0; this.gold = 0; this.gems = 0; this.kills = 0; this.bosses = 0; this.loot = []; this.time = 0;
+      this.mode = opts.tower ? 'tower' : 'run'; this.floor = opts.tower || 0; this.tf = opts.tower ? AB.TOWER.floor(opts.tower) : null;
+      this.act = this.tf ? this.tf.act : 0; this.roomIdx = this.tf ? AB.ROOMS_PER_ACT : 0; this.gold = 0; this.gems = 0; this.kills = 0; this.bosses = 0; this.loot = []; this.time = 0;
       this.input = { mx: 0, my: 0, attack: false, dash: false, skill: [false, false, false], potion: false };
       this.events = []; this.shake = 0; this.hitStop = 0; this.flash = 0;
       this.enterRoom();
@@ -1600,14 +1673,16 @@ AB.Run = (function () {
     }
     makeEnemy(kind, x, y, opts = {}) {
       const d = AB.ENEMIES[kind], a = this.actDef, boss = !!d.boss;
-      const hpMul = (boss ? Math.sqrt(a.mult) : a.mult * (1 + this.roomIdx * 0.12)) * this.tierMul * (opts.elite ? 2.6 : 1);
-      const dmgMul = Math.pow(a.mult, 0.8) * (1 + this.roomIdx * 0.05) * this.tierDmg * (opts.elite ? 1.4 : 1);
+      let hpMul = (boss ? Math.sqrt(a.mult) : a.mult * (1 + this.roomIdx * 0.12)) * this.tierMul * (opts.elite ? 2.6 : 1);
+      let dmgMul = Math.pow(a.mult, 0.8) * (1 + this.roomIdx * 0.05) * this.tierDmg * (opts.elite ? 1.4 : 1);
+      if (this.tf) { hpMul = this.tf.hpMul * (boss ? 1 : 0.9) * (opts.elite ? 2.2 : 1) * (boss ? 1 : Math.max(1, a.mult * 0.8)); dmgMul = this.tf.dmgMul * (opts.elite ? 1.3 : 1); }
       const e = { kind, d, x, y, r: d.r * (opts.elite ? 1.25 : 1), hp: d.hp * hpMul, maxHp: d.hp * hpMul, dmg: d.dmg * dmgMul, speed: d.speed * (opts.elite ? 1.08 : 1) * (0.92 + U.rand() * 0.16),
         state: 'spawn', st: 0.5, cd: 0.6 + U.rand() * 0.8, kx: 0, ky: 0, hit: 0, freeze: 0, stun: 0, burn: 0, burnDps: 0, facing: 1, t: U.rand() * 10, elite: !!opts.elite, boss, wind: 0, atk: 0, phase: 0, dead: false, hitBy: 0 };
       this.enemies.push(e); return e;
     }
     spawnBoss() {
-      const k = this.actDef.boss, e = this.makeEnemy(k, this.W / 2, this.bounds.y0 + 150);
+      const k = this.tf ? this.tf.boss : this.actDef.boss, e = this.makeEnemy(k, this.W / 2, this.bounds.y0 + 150);
+      if (this.tf) { if (this.tf.champion) { e.champion = true; e.elite = true; e.r *= 1.1; } for (let i = 0; i < this.tf.escorts; i++) { const pt = this.spawnPoint(160); const m = this.makeEnemy(U.weighted(this.actDef.pool), pt.x, pt.y, { elite: i === 0 && this.tf.n >= 10 }); m.state = 'chase'; } }
       e.state = 'intro'; e.st = 1.8; e.pattern = 0; this.boss = e; this.emit('boss', { kind: k });
     }
 
@@ -1795,14 +1870,15 @@ AB.Run = (function () {
     }
     bossDown(e) {
       this.bosses++; this.shake = 16; this.hitStop = 0.25; AB.Audio.play('victory');
-      const gems = Math.round([15, 25, 40][this.act] * (1 + this.p.tier * 0.5)); this.gems += gems; this.text(e.x, e.y - 90, '+' + gems + ' 💎', '#5fe0ff', 20, true);
+      if (this.mode !== 'tower') { const gems = Math.round([15, 25, 40][this.act] * (1 + this.p.tier * 0.5)); this.gems += gems; this.text(e.x, e.y - 90, '+' + gems + ' 💎', '#5fe0ff', 20, true); }
       for (let i = 0; i < 16; i++) this.drop('coin', e.x, e.y, Math.round(e.d.gold * (1 + this.p.tier * 0.5) / 6));
-      if (this.act === 2 || U.rand() < 0.3) { this.eggs++; this.text(e.x, e.y - 115, '🥚 Pet egg!', '#ffe9a8', 18, true); }
+      if (this.mode === 'tower' ? (this.tf.champion && U.rand() < 0.35) : (this.act === 2 || U.rand() < 0.3)) { this.eggs++; this.text(e.x, e.y - 115, '🥚 Pet egg!', '#ffe9a8', 18, true); }
       for (const o of this.enemies) if (!o.dead && o !== e) { o.dead = true; }
       this.zones = []; this.projs = this.projs.filter(p => p.mine);
       this.emit('bossDown', { kind: e.kind });
     }
     roomCleared() {
+      if (this.mode === 'tower') { this.phase = 'victory'; this.emit('victory'); return; }
       this.phase = 'clear'; AB.Audio.play('door');
       const lvl = this.lootLevel(), boss = this.isBossRoom;
       if (boss || this.roomIdx === 1 || this.roomIdx === 3 || U.rand() < 0.25) { const r = AB.State.rollRarity(boss ? 0.8 + this.act * 0.3 : 0.15 + this.act * 0.1); this.chests.push({ x: this.W / 2, y: this.bounds.y0 + (this.bounds.y1 - this.bounds.y0) * 0.45, rarity: boss ? Math.max(2, r) : r, open: false, level: lvl }); }
@@ -1825,7 +1901,7 @@ AB.Run = (function () {
       this.enterRoom();
     }
     /** End-of-run summary for State.finishRun. */
-    result() { return { eggs: this.eggs, gold: this.gold, gems: this.gems, act: this.act + (this.phase === 'victory' ? 1 : 0), cleared: this.phase === 'victory', kills: this.kills, bosses: this.bosses, loot: this.loot }; }
+    result() { return { mode: this.mode, floor: this.floor, eggs: this.eggs, gold: this.gold, gems: this.gems, act: this.act + (this.phase === 'victory' ? 1 : 0), cleared: this.phase === 'victory', kills: this.kills, bosses: this.bosses, loot: this.loot }; }
 
     /* ---------------- update ---------------- */
     update(dt) {
@@ -2123,7 +2199,7 @@ AB.Run = (function () {
       for (const m of this.motes) { m.ph += dt; m.x += Math.sin(m.ph * 0.7) * 6 * dt; m.y -= (4 + m.s * 3) * dt; if (m.y < 40) { m.y = this.H - 20; m.x = Math.random() * this.W; } }
       this.shake = Math.max(0, this.shake - dt * 30); this.flash = Math.max(0, this.flash - dt);
       for (const f of this.fx) f.t += dt; this.fx = this.fx.filter(f => f.t < f.life);
-      for (const q of this.parts) { q.life -= dt; q.vy += (q.grav || 0) * dt; q.x += q.vx * dt; q.y += q.vy * dt; } this.parts = this.parts.filter(q => q.life > 0); if (this.parts.length > 400) this.parts.splice(0, this.parts.length - 400);
+      for (const q of this.parts) { q.life -= dt; q.vy += (q.grav || 0) * dt; q.x += q.vx * dt; q.y += q.vy * dt; } this.parts = this.parts.filter(q => q.life > 0); const pcap = AB.QUALITY_LOW ? 140 : 300; if (this.parts.length > pcap) this.parts.splice(0, this.parts.length - pcap);
       for (const t of this.texts) t.t += dt; this.texts = this.texts.filter(t => t.t < t.life);
     }
 
@@ -2181,9 +2257,9 @@ AB.Run = (function () {
       else { const rest = { bow: -0.15, staff: -1.25, scythe: -0.9 }[this.look.weapon]; const r0 = rest != null ? rest : -0.6; wa = p.facing > 0 ? r0 : Math.PI - r0; }
       const A0 = this.hd.attack; let pull = 0;
       if (A0.ranged) { if (p.swing > 0 || this.input.attack) wa = p.aim; pull = this.input.attack ? U.clamp(1 - p.atkCd / A0.rate, 0, 1) : 0; }
-      if (p.hurtT > 0) c.filter = 'brightness(2.2)';
       A.hero(c, this.look, s, { t: p.t, moving: p.moving, wAngle: wa, facing: p.facing, pull });
       c.restore();
+      if (p.hurtT > 0) { c.save(); c.globalCompositeOperation = 'lighter'; A.glow(c, p.x, p.y - 26, 40, '255,80,60', p.hurtT * 3); c.restore(); }
       // orbiting blades
       for (let k = 0; k < p.orbit; k++) { const a = p.orbitA + k * TAU / p.orbit; A.projectile(c, { kind: 'blade', x: p.x + Math.cos(a) * 62, y: p.y + Math.sin(a) * 40, a }, p.t); }
     }
@@ -2193,10 +2269,10 @@ AB.Run = (function () {
       A.shadow(c, e.x, e.y + 2, e.r * 1.25, e.r * 0.45, 0.5);
       if (e.elite) { c.save(); c.globalCompositeOperation = 'lighter'; A.glow(c, e.x, e.y - e.r, e.r * 2.4, '255,200,60', 0.3); c.restore(); c.beginPath(); c.ellipse(e.x, e.y + 2, e.r * 1.3, e.r * 0.48, 0, 0, TAU); c.strokeStyle = 'rgba(255,207,74,0.8)'; c.lineWidth = 2; c.stroke(); }
       c.save(); c.translate(e.x, e.y); c.scale(e.facing, 1);
-      if (e.hit > 0) c.filter = 'brightness(2.5)'; else if (e.freeze > 0) c.filter = 'hue-rotate(160deg) saturate(0.6) brightness(1.4)';
       if (e.wind > 0 && !e.boss && e.d.ai !== 'ranged') { const w = Math.sin(e.t * 40) * 1.5 * e.wind; c.translate(w, 0); }
       A.enemy(c, e.kind, s, { t: e.t, moving: e.moving, atk: e.atk, wind: e.wind, enraged: e.enraged });
       c.restore();
+      if (e.hit > 0 || e.freeze > 0) { c.save(); c.globalCompositeOperation = 'lighter'; A.glow(c, e.x, e.y - e.r * 1.1, e.r * 2.0, e.hit > 0 ? '255,255,255' : '120,200,255', e.hit > 0 ? 0.75 * (e.hit / 0.12) : 0.45); c.restore(); }
       if (e.freeze > 0) { c.save(); c.globalAlpha = 0.45; A.withInk(1, () => A.poly(c, [e.x - e.r, e.y, e.x - e.r * 0.8, e.y - e.r * 2.4, e.x + e.r * 0.8, e.y - e.r * 2.6, e.x + e.r, e.y], '#cfeaff')); c.restore(); }
       if (e.stun > 0) for (let i = 0; i < 3; i++) { const a = e.t * 6 + i * 2.1; A.circle(c, e.x + Math.cos(a) * e.r * 0.7, e.y - e.r * 2.6 + Math.sin(a) * 3, 2.2, '#ffe08a'); }
       if (e.burn > 0 && Math.random() < 0.3) this.parts.push({ x: e.x + (Math.random() - 0.5) * e.r, y: e.y - e.r, vx: 0, vy: -50, life: 0.4, max: 0.4, col: '#ff8a2a', size: 3, grav: 0 });
@@ -2285,7 +2361,7 @@ AB.Input = (function () {
 <script>
 /* =====================================================================
  * Ashen Blade — ui.js
- * Hub (camp), sheets (forge, upgrades, codex, more), HUD, modals.
+ * Hub (camp), sheets (forge, pets, upgrades, tower, shop, more), HUD, modals.
  * ===================================================================== */
 AB.UI = (function () {
   const $ = id => document.getElementById(id), U = AB.util, S = AB.State;
@@ -2319,6 +2395,7 @@ AB.UI = (function () {
     $('tiers').innerHTML = tiers.join('');
     // forge dot when there is an upgrade to equip
     const nav = document.querySelector('[data-sheet="forge"]'); nav.classList.toggle('dot', owned && S.hasUpgradeFor(s, id));
+    document.querySelector('[data-sheet="shop"]').classList.toggle('dot', S.giftReady(s));
     document.querySelector('[data-sheet="pets"]').classList.toggle('dot', s.gems >= AB.PET_EGG.cost && !Object.keys(s.pets).length);
   }
   const toRoman = n => ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'][n] || String(n);
@@ -2331,9 +2408,9 @@ AB.UI = (function () {
   function openSheet(name) { curSheet = name; selGear = null; $('sheet').hidden = false; renderSheet(); AB.Audio.play('click'); }
   function closeSheet() { $('sheet').hidden = true; curSheet = null; refreshHub(); app.persist(); }
   function renderSheet() {
-    const titles = { forge: '⚒ Forge', pets: '🐾 Pets', upgrades: '⬆ Upgrades', codex: '📜 Codex', more: '⚙ More' };
-    const body = { forge: forgeHtml, pets: petsHtml, upgrades: upgradesHtml, codex: codexHtml, more: moreHtml }[curSheet]();
-    $('sheet').innerHTML = '<div class="sheet-in"><div class="sheet-head"><h2>' + titles[curSheet] + '</h2><span class="chip">🪙 ' + U.fmt(app.save.gold) + '</span>' + (curSheet === 'pets' ? '<span class="chip">💎 ' + U.fmt(app.save.gems) + '</span>' : '') + '<button class="x" data-close aria-label="Close">✕</button></div><div class="sheet-body">' + body + '</div></div>';
+    const titles = { forge: '⚒ Forge', pets: '🐾 Pets', upgrades: '⬆ Upgrades', dungeon: '🏰 Tower Conquest', shop: '🛒 Shop', more: '⚙ More' };
+    const body = { forge: forgeHtml, pets: petsHtml, upgrades: upgradesHtml, dungeon: dungeonHtml, shop: shopHtml, more: moreHtml }[curSheet]();
+    $('sheet').innerHTML = '<div class="sheet-in"><div class="sheet-head"><h2>' + titles[curSheet] + '</h2><span class="chip">🪙 ' + U.fmt(app.save.gold) + '</span>' + (curSheet === 'pets' || curSheet === 'shop' || curSheet === 'dungeon' ? '<span class="chip">💎 ' + U.fmt(app.save.gems) + '</span>' : '') + '<button class="x" data-close aria-label="Close">✕</button></div><div class="sheet-body">' + body + '</div></div>';
     paintCanvases($('sheet'));
   }
   function paintCanvases(root) {
@@ -2387,19 +2464,31 @@ AB.UI = (function () {
     for (const id of AB.HERO_ORDER) { const hd = AB.HEROES[id], own = s.heroes[id]; h += '<div class="row"><div class="ic">' + AB.SKILLS[hd.skills[2]].icon + '</div><div class="tx"><b>' + hd.name + ' · ' + hd.title + '</b><small>' + hd.skills.map(k => AB.SKILLS[k].name).join(' · ') + '</small></div>' + (own ? '<span class="chip">Owned</span>' : '<button class="btn' + (s.gems >= hd.cost ? ' gold' : '') + '" data-unlock="' + id + '"' + (s.gems < hd.cost ? ' disabled' : '') + '>💎 ' + hd.cost + '</button>') + '</div>'; }
     return h + '</div>';
   }
-  function codexHtml() {
-    const hd = AB.HEROES[AB.HERO_ORDER[app.heroIdx]];
-    let h = '<div class="sec"><h3>' + hd.name + "'s skills</h3>" + hd.skills.map((k, i) => { const S2 = AB.SKILLS[k]; return '<div class="row"><div class="ic">' + S2.icon + '</div><div class="tx"><b>' + S2.name + (i === 2 ? ' <span class="lv">ULTIMATE</span>' : '') + '</b><small>' + S2.desc + ' Cooldown ' + S2.cd + 's.</small></div></div>'; }).join('') + '</div>';
-    h += '<div class="sec"><h3>Acts & bosses</h3>' + AB.ACTS.map(a => '<div class="row"><canvas data-enemy="' + a.boss + '" style="width:56px;height:56px"></canvas><div class="tx"><b>' + a.sub + ' · ' + a.name + '</b><small>Boss: ' + AB.ENEMIES[a.boss].name + '</small></div></div>').join('') + '</div>';
-    const seen = new Set(); h += '<div class="sec"><h3>Bestiary</h3><div class="inv">';
-    for (const a of AB.ACTS) for (const [k] of a.pool) if (!seen.has(k)) { seen.add(k); h += '<div class="item" style="border-color:rgba(255,255,255,0.15)" title="' + esc(AB.ENEMIES[k].name) + '"><canvas data-enemy="' + k + '"></canvas></div>'; }
-    h += '</div></div><div class="sec"><h3>Boons</h3>' + Object.values(AB.BOONS).map(b => '<div class="row"><div class="ic">' + b.icon + '</div><div class="tx"><b>' + b.name + ' <span class="lv">max ' + b.max + '</span></b><small>' + b.desc + '</small></div></div>').join('') + '</div>';
-    return h;
+  /** Hero used for tower fights: the carousel hero if owned. */
+  const towerHero = () => { const id = AB.HERO_ORDER[app.heroIdx]; return app.save.heroes[id] ? id : app.save.hero; };
+  function dungeonHtml() {
+    const s = app.save, f = s.tower.floor, F = AB.TOWER.floor(f), hid = towerHero(), hd = AB.HEROES[hid];
+    const rec = Math.round(150 * Math.pow(F.hpMul, 0.8) * Math.sqrt(F.dmgMul)), pow = S.power(s, hid);
+    let h = '<div class="tower-cur' + (F.champion ? ' champ' : '') + '"><div class="tw-floor"><small>FLOOR</small><b>' + f + '</b></div><canvas data-enemy="' + F.boss + '"></canvas><div class="tx"><b>' + AB.ENEMIES[F.boss].name + '</b><small>' + (F.champion ? '👑 Champion floor · triple gems' : AB.ACTS[F.act].name) + (F.escorts ? ' · ' + F.escorts + ' escort' + (F.escorts > 1 ? 's' : '') : '') + '</small><small>Recommended ⚡ ' + U.fmt(rec) + ' · You ⚡ <span class="' + (pow >= rec ? 'cmp-up' : 'cmp-dn') + '">' + U.fmt(pow) + '</span></small><div class="rw"><span class="chip">💎 ' + F.gems + '</span><span class="chip">🪙 ' + U.fmt(F.gold) + '</span></div></div></div>';
+    h += '<button class="btn gold big" style="width:100%;margin:10px 0 4px" data-tower="' + f + '">⚔ Challenge with ' + hd.name + '</button><p class="sub" style="margin:0 0 12px;text-align:center">Change hero with the arrows in camp. One boss per floor, no boons. First clear pays the reward.</p>';
+    h += '<div class="sec"><h3>The climb</h3>';
+    for (let n = f + 4; n >= Math.max(1, f - 3); n--) { const G = AB.TOWER.floor(n), done = n < f, cur = n === f; h += '<div class="row tw-row' + (done ? ' done' : cur ? ' cur' : '') + '"><div class="ic">' + (done ? '✅' : cur ? '⚔' : G.champion ? '👑' : '🔒') + '</div><div class="tx"><b>Floor ' + n + ' · ' + AB.ENEMIES[G.boss].name + '</b><small>' + (G.champion ? 'Champion · ' : '') + (done ? 'Cleared' : '💎 ' + G.gems + ' · 🪙 ' + U.fmt(G.gold)) + '</small></div></div>'; }
+    return h + '</div>';
+  }
+  function shopHtml() {
+    const s = app.save, gift = S.giftReady(s), gv = S.giftValue(s), lv = S.shopLevel(s), hid = AB.HERO_ORDER[app.heroIdx];
+    let h = '<div class="egg"><div class="egg-ic">🎁</div><div class="tx"><b>Daily Gift</b><small>' + (gift ? 'Free today: 🪙 ' + U.fmt(gv.gold) + ' + 💎 ' + gv.gems : 'Claimed. Come back tomorrow!') + '</small></div><button class="btn' + (gift ? ' gold' : '') + '" data-gift' + (gift ? '' : ' disabled') + '>' + (gift ? 'Claim' : '✓') + '</button></div>';
+    h += '<div class="sec" style="margin-top:14px"><h3>Gear chests · Lv ' + lv + ' · weapons for ' + AB.HEROES[hid].name + '</h3>';
+    for (const k in AB.SHOP.chests) { const C2 = AB.SHOP.chests[k]; h += '<div class="row shop-row"><div class="ic">' + C2.icon + '</div><div class="tx"><b style="color:' + AB.RARITY[C2.min].color + '">' + C2.name + '</b><small>' + C2.desc + '</small></div><button class="btn' + (s.gems >= C2.cost ? ' gold' : '') + '" data-chest="' + k + '"' + (s.gems < C2.cost ? ' disabled' : '') + '>💎 ' + C2.cost + '</button></div>'; }
+    h += '</div><div class="sec"><h3>Gold</h3>';
+    for (const k in AB.SHOP.gold) { const P = AB.SHOP.gold[k]; h += '<div class="row shop-row"><div class="ic">' + (k === 'big' ? '💰' : '🪙') + '</div><div class="tx"><b>' + U.fmt(P.gold) + ' Gold</b><small>For upgrades and gear enhancing</small></div><button class="btn' + (s.gems >= P.gems ? ' gold' : '') + '" data-goldpack="' + k + '"' + (s.gems < P.gems ? ' disabled' : '') + '>💎 ' + P.gems + '</button></div>'; }
+    h += '<div class="row shop-row"><div class="ic">🥚</div><div class="tx"><b>Mystic Egg</b><small>Hatch a random pet</small></div><button class="btn' + (s.gems >= AB.PET_EGG.cost ? ' gold' : '') + '" data-summon' + (s.gems < AB.PET_EGG.cost ? ' disabled' : '') + '>💎 ' + AB.PET_EGG.cost + '</button></div>';
+    return h + '</div><p class="sub" style="text-align:center">Earn gems in Tower Conquest, from bosses, and with redeem codes.</p>';
   }
   function moreHtml() {
     const s = app.save;
     return '<div class="sec"><h3>Redeem code</h3><div class="field"><input id="codeIn" placeholder="ENTER CODE" maxlength="40" autocomplete="off" autocapitalize="characters"><button class="btn gold" data-redeem>Redeem</button></div></div>' +
-      '<div class="sec"><h3>Settings</h3><label class="toggle">Sound<input type="checkbox" data-set="sound"' + (s.settings.sound ? ' checked' : '') + '></label><label class="toggle">Screen shake<input type="checkbox" data-set="shake"' + (s.settings.shake ? ' checked' : '') + '></label></div>' +
+      '<div class="sec"><h3>Settings</h3><label class="toggle">Sound<input type="checkbox" data-set="sound"' + (s.settings.sound ? ' checked' : '') + '></label><label class="toggle">Screen shake<input type="checkbox" data-set="shake"' + (s.settings.shake ? ' checked' : '') + '></label><div class="toggle">Graphics<span class="tabs" style="margin:0">' + [['auto', 'Auto'], ['high', 'High'], ['low', 'Low']].map(([k, n]) => '<button class="tab' + ((s.settings.gfx || 'auto') === k ? ' on' : '') + '" data-gfx="' + k + '">' + n + '</button>').join('') + '</span></div><p style="color:var(--muted);font-weight:700;font-size:.85rem;margin:0">Auto lowers resolution and lighting when your phone struggles. Low = smoothest.</p></div>' +
       '<div class="sec"><h3>Records</h3><div class="res-grid"><div>' + s.runs + '<small>Runs</small></div><div>' + U.fmt(s.kills) + '<small>Kills</small></div><div>' + s.bossKills + '<small>Bosses</small></div></div><p style="color:var(--muted);font-weight:700">Best: ' + (s.best.tier ? 'Nightmare ' + toRoman(s.best.tier) + ', ' : '') + 'Act ' + s.best.act + ' cleared</p></div>' +
       '<div class="sec help"><h3>How to play</h3><p><b>Move</b> with the joystick (drag anywhere on the left side) or WASD. <b>Attack</b> with ⚔ (hold to keep swinging) or J / Space. Swings aim at the nearest enemy and can parry arrows.</p><p><b>Dash</b> 💨 (K / Shift) makes you invulnerable for a moment. Use it to escape red danger zones. Skills: 1, 2, 3. Potion: Q.</p><p>Each act has 4 rooms and a boss. After every room pick a <b>boon</b> to grow stronger for this run. Gold, gems and gear you find are kept. Beat Act III to unlock the next <b>Nightmare</b> tier with tougher monsters and better loot.</p></div>';
   }
@@ -2410,6 +2499,11 @@ AB.UI = (function () {
     if (d.gsel !== undefined) { selGear = d.gsel || null; AB.Audio.play('click'); renderSheet(); return; }
     if (d.equip) { S.equip(s, d.equip, AB.HERO_ORDER[app.heroIdx]); AB.Audio.play('boon'); renderSheet(); app.persist(); return; }
     if (d.upg) { if (S.upgradeGear(s, d.upg)) { AB.Audio.play('boon'); const g = S.gearById(s, d.upg); toast('⬆ ' + gName(g)); app.persist(); } renderSheet(); return; }
+    if (d.gfx) { s.settings.gfx = d.gfx; app.applyGfx(); app.persist(); AB.Audio.play('click'); renderSheet(); return; }
+    if (d.tower) { const hid = towerHero(); s.hero = hid; closeSheet(); app.startRun({ tower: +d.tower }); return; }
+    if ('gift' in d) { const g = S.claimGift(s); if (g) { AB.Audio.play('victory'); toast('🎁 +🪙 ' + U.fmt(g.gold) + ' +💎 ' + g.gems); app.persist(); } renderSheet(); return; }
+    if (d.chest) { const g = S.buyChest(s, d.chest, AB.HERO_ORDER[app.heroIdx]); if (g) { AB.Audio.play('victory'); const R = AB.RARITY[g.rarity]; toast('<span style="color:' + R.color + '">' + R.name + ' ' + gName(g) + '</span>', cv => AB.Art.gearIcon(cv, g)); app.persist(); } renderSheet(); return; }
+    if (d.goldpack) { if (S.buyGold(s, d.goldpack)) { AB.Audio.play('coin'); toast('+🪙 ' + U.fmt(AB.SHOP.gold[d.goldpack].gold)); app.persist(); } renderSheet(); return; }
     if (d.filter) { filter = d.filter; AB.Audio.play('click'); renderSheet(); return; }
     if (d.hsw) { app.heroIdx = (app.heroIdx + AB.HERO_ORDER.length + +d.hsw) % AB.HERO_ORDER.length; selGear = null; AB.Audio.play('click'); renderSheet(); return; }
     if ('summon' in d) { const r = S.summonPet(s); if (r) { AB.Audio.play('victory'); const P = AB.PETS[r.id]; toast((r.dup ? '⬆ ' : '🐣 ') + '<span style="color:' + AB.RARITY[P.rarity].color + '">' + P.name + '</span>' + (r.dup ? ' reached Lv ' + r.level : ' hatched!'), cv => AB.Art.petPortrait(cv, r.id)); app.persist(); } renderSheet(); return; }
@@ -2437,7 +2531,7 @@ AB.UI = (function () {
     $('hpFill').style.transform = 'scaleX(' + f + ')'; $('hpLag').style.transform = 'scaleX(' + Math.max(f, Math.min(lastHp, 1)) + ')'; if (f >= lastHp || Math.random() < 0.03) lastHp = f;
     $('hpText').textContent = Math.ceil(p.hp) + ' / ' + p.maxHp;
     $('lowhp').style.opacity = f < 0.3 ? 0.6 + Math.sin(run.time * 6) * 0.3 : 0;
-    $('hudRoom').textContent = AB.ACTS[run.act].sub + ' · ' + (run.isBossRoom ? 'Boss' : (run.roomIdx + 1) + '/' + (AB.ROOMS_PER_ACT + 1));
+    $('hudRoom').textContent = run.mode === 'tower' ? '🏰 Floor ' + run.floor : AB.ACTS[run.act].sub + ' · ' + (run.isBossRoom ? 'Boss' : (run.roomIdx + 1) + '/' + (AB.ROOMS_PER_ACT + 1));
     $('hudGold').textContent = '🪙 ' + U.fmt(run.gold);
     if (run.gems) { $('hudGems').hidden = false; $('hudGems').textContent = '💎 ' + run.gems; }
     const b = run.boss; $('bossBar').hidden = !(b && !b.dead);
@@ -2468,6 +2562,13 @@ AB.UI = (function () {
   }
   function resultModal(run, res) {
     const win = res.cleared;
+    if (res.mode === 'tower') {
+      modal('<h2>' + (win ? '🏰 Floor ' + res.floor + ' cleared!' : '☠ Defeated') + '</h2><p class="sub">' + (win ? (res.reward ? 'First clear reward' : 'Already cleared before: no reward') : 'The boss of floor ' + res.floor + ' was too strong. Upgrade gear, then try again.') + '</p>' +
+        (res.reward ? '<div class="res-grid" style="grid-template-columns:1fr 1fr"><div>💎 ' + res.reward.gems + '<small>Gems</small></div><div>🪙 ' + U.fmt(res.reward.gold) + '<small>Gold</small></div></div>' : '') +
+        (res.hatched && res.hatched.length ? '<p class="sub" style="margin:0">Egg hatched: ' + res.hatched.map(r => AB.PETS[r.id].name).join(', ') + '</p>' : '') +
+        '<div class="modal-acts">' + (win ? '<button class="btn gold" data-tnext="' + (res.floor + 1) + '">Next floor ⚔</button>' : '<button class="btn gold" data-tnext="' + res.floor + '">Retry</button>') + '<button class="btn" data-camp>Back to camp</button></div>');
+      return;
+    }
     app.lastLoot = res.loot;
     modal('<h2>' + (win ? '🏆 Victory!' : '☠ Fallen') + '</h2><p class="sub">' + (win ? 'Malachar is vanquished.' + (app.save.tier < app.save.maxTier ? '' : '') : 'You fell in ' + AB.ACTS[run.act].name + '.') + '</p>' +
       '<div class="res-grid"><div>🪙 ' + U.fmt(res.gold) + '<small>Gold</small></div><div>💎 ' + res.gems + '<small>Gems</small></div><div>' + res.kills + '<small>Kills</small></div></div>' +
@@ -2482,6 +2583,7 @@ AB.UI = (function () {
     if ('resume' in d) { closeModal(); app.paused = false; return; }
     if ('abandon' in d) { closeModal(); app.endRun(true); return; }
     if ('camp' in d) { closeModal(); app.toHub(); return; }
+    if (d.tnext) { closeModal(); app.toHub(); if (+d.tnext === app.save.tower.floor) app.startRun({ tower: +d.tnext }); else openSheet('dungeon'); return; }
     if ('again' in d) { closeModal(); app.toHub(); app.startRun(); return; }
   }
 
@@ -2519,18 +2621,30 @@ AB.App = (function () {
   const app = { save: null, run: null, heroIdx: 0, paused: false, cam: { x: 0, y: 0 }, camp: null, embers: [] };
   const cv = $('cv'), ctx = cv.getContext('2d');
   let W = 0, H = 0, dpr = 1;
-  function resize() { dpr = Math.min(2, window.devicePixelRatio || 1); W = window.innerWidth; H = window.innerHeight; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  /* Graphics quality. Levels: 0 = low (1x, no lighting), 1 = 1x + lighting, 2 = 1.5x, 3 = 2x.
+   * 'auto' starts at 2 and steps down when the frame rate drops. */
+  const LEVELS = [{ dpr: 1, light: false }, { dpr: 1, light: true }, { dpr: 1.5, light: true }, { dpr: 2, light: true }];
+  let qLevel = 2, fpsAcc = 0, fpsN = 0, fpsT = 0, lowStreak = 0;
+  function setQuality(lv) { qLevel = Math.max(0, Math.min(3, lv)); AB.QUALITY_LOW = qLevel === 0; resize(); }
+  app.applyGfx = function () { const g = (app.save && app.save.settings.gfx) || 'auto'; setQuality(g === 'high' ? 3 : g === 'low' ? 0 : 2); };
+  app.quality = () => qLevel;
+  function resize() { dpr = Math.min(LEVELS[qLevel].dpr, window.devicePixelRatio || 1); W = window.innerWidth; H = window.innerHeight; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  function trackFps(dt) {
+    if (!app.run || app.paused || ((app.save && app.save.settings.gfx) || 'auto') !== 'auto') return;
+    fpsAcc += dt; fpsN++; fpsT += dt;
+    if (fpsT >= 2) { const fps = fpsN / fpsAcc; fpsAcc = fpsN = fpsT = 0; if (fps < 42) { if (++lowStreak >= 1 && qLevel > 0) { setQuality(qLevel - 1); lowStreak = 0; } } else lowStreak = 0; }
+  }
   app.persist = () => S.save(app.save);
 
   /* ---------------- runs ---------------- */
-  app.startRun = function () {
+  app.startRun = function (opts) {
     const heroId = app.save.hero;
     AB.Audio.ensure();
-    app.run = new AB.Run(app.save, heroId); AB.Input.run = app.run; AB.Input.reset(); app.paused = false;
+    app.run = new AB.Run(app.save, heroId, opts || {}); AB.Input.run = app.run; AB.Input.reset(); app.paused = false;
     $('hub').hidden = true; $('hud').hidden = false; UI.closeSheet && ($('sheet').hidden = true);
     UI.buildHud(app.run);
     const r = app.run; app.cam.x = r.p.x; app.cam.y = r.p.y - 60;
-    UI.banner(AB.ACTS[0].sub, AB.ACTS[0].name);
+    if (r.mode === 'tower') UI.banner('TOWER · FLOOR ' + r.floor, AB.ENEMIES[r.tf.boss].name + (r.tf.champion ? ' (Champion)' : '')); else UI.banner(AB.ACTS[0].sub, AB.ACTS[0].name);
   };
   app.endRun = function (abandon) {
     const r = app.run; if (!r || r.ended) return; r.ended = true;
@@ -2547,7 +2661,7 @@ AB.App = (function () {
   function handleEvents(r) {
     for (const e of r.events) {
       if (e.type === 'room' && e.room === 0 && e.act > 0) UI.banner(AB.ACTS[e.act].sub, AB.ACTS[e.act].name);
-      else if (e.type === 'boss') { UI.banner('BOSS', AB.ENEMIES[e.kind].name); AB.Audio.play('boss'); }
+      else if (e.type === 'boss') { if (r.mode !== 'tower') UI.banner('BOSS', AB.ENEMIES[e.kind].name); AB.Audio.play('boss'); }
       else if (e.type === 'boon') UI.boonModal(r, e.choices);
       else if (e.type === 'loot') { const g = e.gear, R = AB.RARITY[g.rarity]; UI.toast('<span style="color:' + R.color + '">' + R.name + ' ' + g.name + '</span>', cvs => AB.Art.gearIcon(cvs, g)); }
       else if (e.type === 'bossDown') UI.banner('VICTORY', AB.ENEMIES[e.kind].name + ' falls');
@@ -2565,7 +2679,7 @@ AB.App = (function () {
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#0d0a12'; ctx.fillRect(0, 0, cv.width, cv.height);
     const cx = 15 * T / 2, cy = 19 * T * 0.48;
     ctx.setTransform(dpr * k, 0, 0, dpr * k, dpr * (W / 2 - cx * k), dpr * (H * 0.56 - cy * k));
-    ctx.drawImage(cp.bake.floor, 0, 0, 15 * T, 19 * T); ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.7; ctx.drawImage(cp.bake.emit, 0, 0, 15 * T, 19 * T); ctx.restore();
+    ctx.drawImage(cp.bake.floor, 0, 0, 15 * T, 19 * T);
     const act = AB.ACTS[0];
     A.prop(ctx, { kind: 'pillar', x: cx - 110, y: cy - 40 }, act, t); A.prop(ctx, { kind: 'pillar', x: cx + 110, y: cy - 40 }, act, t);
     A.prop(ctx, { kind: 'brazier', x: cx - 80, y: cy + 50 }, act, t); A.prop(ctx, { kind: 'brazier', x: cx + 80, y: cy + 50 }, act, t);
@@ -2581,9 +2695,9 @@ AB.App = (function () {
     ctx.restore();
     const pid = app.save.pet; if (pid && own) { const fly = AB.PETS[pid].attack !== 'melee'; A.shadow(ctx, cx - 62, cy + 30, 20, 7, 0.45); ctx.save(); ctx.translate(cx - 62, cy + 30); A.pet(ctx, pid, fly ? 22 : 24, { t, moving: false }); ctx.restore(); }
     // camp lighting: braziers, hero glow, torches
-    { const LQ = 0.5; if (!app.lc) app.lc = document.createElement('canvas'); const lw = Math.ceil(cv.width * LQ), lh = Math.ceil(cv.height * LQ); if (app.lc.width !== lw || app.lc.height !== lh) { app.lc.width = lw; app.lc.height = lh; }
+    { const LQ = 0.34 / dpr * 1.5; if (!app.lc) app.lc = document.createElement('canvas'); const lw = Math.ceil(cv.width * LQ), lh = Math.ceil(cv.height * LQ); if (app.lc.width !== lw || app.lc.height !== lh) { app.lc.width = lw; app.lc.height = lh; }
       const fl = n => 200 + Math.sin(t * 11 + n) * 10, lights = [{ x: cx - 80, y: cy + 16, r: fl(1), i: 1 }, { x: cx + 80, y: cy + 16, r: fl(2), i: 1 }, { x: cx, y: cy - 20, r: 230, i: 0.9 }].concat(cp.bake.lights);
-      A.lightPass(app.lc, 'rgba(6,8,22,0.62)', lights, dpr * k * LQ, -(W / 2 - cx * k) / k, -(H * 0.56 - cy * k) / k);
+      A.lightPass(app.lc, 'rgba(6,8,22,0.62)', lights, dpr * k * LQ, -(W / 2 - cx * k) / k, -(H * 0.56 - cy * k) / k, true);
       ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(app.lc, 0, 0, cv.width, cv.height); ctx.restore();
       ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.glow(ctx, cx - 80, cy + 10, 110, '255,160,70', 0.28); A.glow(ctx, cx + 80, cy + 10, 110, '255,160,70', 0.28); ctx.restore(); }
     if (sw > 0 && own) A.slash(ctx, cx + 4, cy - 30, -0.4, 2.2, 120, sw, '210,230,255', 1);
@@ -2592,7 +2706,6 @@ AB.App = (function () {
     for (const e of app.embers) { e.t += 1 / 60; e.y += e.vy / 60; e.x += Math.sin(e.t * 2 + e.y) * 0.3; ctx.globalAlpha = Math.max(0, 1 - e.t / e.life); ctx.fillStyle = '#ffb35a'; ctx.fillRect(e.x, e.y, 2, 2); }
     ctx.globalAlpha = 1; app.embers = app.embers.filter(e => e.t < e.life);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    const vg = ctx.createRadialGradient(cv.width / 2, cv.height * 0.5, cv.height * 0.2, cv.width / 2, cv.height * 0.5, cv.height * 0.75); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(5,2,8,0.8)'); ctx.fillStyle = vg; ctx.fillRect(0, 0, cv.width, cv.height);
   }
   const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)).join(',');
 
@@ -2605,29 +2718,28 @@ AB.App = (function () {
     const clampC = (v, size, view) => size <= view ? size / 2 : Math.max(view / 2 - 20, Math.min(size - view / 2 + 20, v));
     app.cam.x = clampC(app.cam.x, r.W, vw); app.cam.y = clampC(app.cam.y, r.H, vh);
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#07050a'; ctx.fillRect(0, 0, cv.width, cv.height);
+    const Q = LEVELS[qLevel];
     const shk = app.save.settings.shake ? r.shake : 0, view = { x: app.cam.x - vw / 2 + (Math.random() - 0.5) * shk, y: app.cam.y - vh / 2 + (Math.random() - 0.5) * shk };
     view.bakeScale = Math.min(2, Math.max(1, Math.round(dpr * scale * 2) / 2));
     ctx.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
     r.draw(ctx, view);
-    // lighting: darkness with light holes, then additive glow and emissive floor
-    const A = AB.Art, LQ = 0.5;
-    if (!app.lc) app.lc = document.createElement('canvas');
-    const lw = Math.ceil(cv.width * LQ), lh = Math.ceil(cv.height * LQ); if (app.lc.width !== lw || app.lc.height !== lh) { app.lc.width = lw; app.lc.height = lh; }
-    const lights = r.collectLights(), act = r.actDef;
-    A.lightPass(app.lc, act.dark || 'rgba(6,10,24,0.55)', lights, dpr * scale * LQ, view.x, view.y);
-    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = true; ctx.drawImage(app.lc, 0, 0, cv.width, cv.height);
-    ctx.setTransform(dpr * scale, 0, 0, dpr * scale, -view.x * dpr * scale, -view.y * dpr * scale);
-    ctx.save(); ctx.globalCompositeOperation = 'lighter';
-    if (r.baked) { ctx.globalAlpha = 0.75 + Math.sin(r.time * 2) * 0.12; ctx.drawImage(r.baked.emit, 0, 0, r.W, r.H); ctx.globalAlpha = 1; }
-    for (const L of lights) if (L.a > 0.01) A.glow(ctx, L.x, L.y, L.r * 0.55, L.rgb, L.a * 0.5);
-    for (const m of r.motes || []) { const a = 0.25 + 0.25 * Math.sin(m.ph * 2); ctx.fillStyle = act.lava ? 'rgba(255,150,70,' + a + ')' : act.ice ? 'rgba(220,240,255,' + a + ')' : 'rgba(255,230,180,' + a + ')'; ctx.fillRect(m.x, m.y, m.s * 1.6, m.s * 1.6); }
-    ctx.restore();
+    // lighting: darkness with light holes (+ vignette), then a few additive glows
+    const A = AB.Art, act = r.actDef;
+    if (Q.light) {
+      const LQ = 0.34 / dpr * 1.5;
+      if (!app.lc) app.lc = document.createElement('canvas');
+      const lw = Math.ceil(cv.width * LQ), lh = Math.ceil(cv.height * LQ); if (app.lc.width !== lw || app.lc.height !== lh) { app.lc.width = lw; app.lc.height = lh; }
+      const lights = r.collectLights();
+      A.lightPass(app.lc, act.dark || 'rgba(6,10,24,0.55)', lights, dpr * scale * LQ, view.x, view.y, true);
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = true; ctx.drawImage(app.lc, 0, 0, cv.width, cv.height);
+      ctx.setTransform(dpr * scale, 0, 0, dpr * scale, -view.x * dpr * scale, -view.y * dpr * scale);
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      for (const L of lights) if (L.a >= 0.2) A.glow(ctx, L.x, L.y, L.r * 0.42, L.rgb, L.a * 0.45);
+      if (qLevel >= 2) for (const m of r.motes || []) { const a = 0.25 + 0.25 * Math.sin(m.ph * 2); ctx.fillStyle = act.lava ? 'rgba(255,150,70,' + a + ')' : act.ice ? 'rgba(220,240,255,' + a + ')' : 'rgba(255,230,180,' + a + ')'; ctx.fillRect(m.x, m.y, m.s * 1.6, m.s * 1.6); }
+      ctx.restore();
+    }
     ctx.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
     r.drawTexts(ctx, view);
-    // vignette
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    if (!app.vig || app.vig.w !== cv.width || app.vig.h !== cv.height) { const g = ctx.createRadialGradient(cv.width / 2, cv.height / 2, Math.min(cv.width, cv.height) * 0.35, cv.width / 2, cv.height / 2, Math.max(cv.width, cv.height) * 0.72); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.55)'); app.vig = { g, w: cv.width, h: cv.height }; }
-    ctx.fillStyle = app.vig.g; ctx.fillRect(0, 0, cv.width, cv.height);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     if (r.flash > 0) { ctx.fillStyle = 'rgba(255,40,30,' + (r.flash * 0.35) + ')'; ctx.fillRect(0, 0, cv.width, cv.height); }
     if (r.phase === 'dead') { ctx.fillStyle = 'rgba(20,0,0,' + Math.min(0.6, (1.6 - r.deadT) * 0.5) + ')'; ctx.fillRect(0, 0, cv.width, cv.height); }
@@ -2636,7 +2748,7 @@ AB.App = (function () {
   /* ---------------- loop ---------------- */
   let last = performance.now();
   function frame(now) {
-    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    const rawDt = (now - last) / 1000, dt = Math.min(0.05, rawDt); last = now; if (rawDt < 0.5) trackFps(rawDt);
     try {
       const r = app.run;
       if (r) {
@@ -2653,7 +2765,7 @@ AB.App = (function () {
   app.boot = function () {
     app.save = S.load(); AB.Audio.set(app.save.settings.sound);
     app.heroIdx = Math.max(0, AB.HERO_ORDER.indexOf(app.save.hero));
-    resize(); window.addEventListener('resize', resize);
+    app.applyGfx(); window.addEventListener('resize', resize);
     UI.init(app); AB.Input.bind($('stage'), $('knobBase'), $('knob'));
     UI.refreshHub();
     window.addEventListener('pointerdown', () => AB.Audio.ensure(), { capture: true, once: true });

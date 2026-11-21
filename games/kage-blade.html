@@ -2275,14 +2275,12 @@ KB.Render = (function () {
     }
     return h;
   }
-  let hold = null;
-  $('panel').addEventListener('pointerdown', e => {
+  // one tap = one upgrade (no auto-repeat: the panel re-renders under the finger)
+  $('panel').addEventListener('click', e => {
     const b = e.target.closest('[data-up]'); if (!b) return;
-    const k = b.dataset.up, doUp = () => { const r = S.upgradeStat(app.save, k, app.mult); if (r.ok) { sfx('upgrade'); app.game.refreshStats(false); renderTab(); hud(); } else { stopHold(); fail(r); } };
-    doUp(); stopHold(); let delay = 380; const rep = () => { doUp(); delay = Math.max(70, delay * 0.8); hold = setTimeout(rep, delay); }; hold = setTimeout(rep, delay);
+    const r = S.upgradeStat(app.save, b.dataset.up, app.mult);
+    if (r.ok) { sfx('upgrade'); app.game.refreshStats(false); renderTab(); hud(); } else fail(r);
   });
-  const stopHold = () => { clearTimeout(hold); hold = null; };
-  ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => document.addEventListener(ev, stopHold));
 
   /* --- Gear --- */
   function itemTile(kind, it) {
