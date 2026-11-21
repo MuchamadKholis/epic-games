@@ -1,4 +1,8 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ruang Main</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -132,13 +136,15 @@ header.top { display: flex; align-items: flex-end; justify-content: space-betwee
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
+</head>
+<body>
 <div class="wrap">
   <header class="top">
     <div class="brand">
       <svg class="mark" viewBox="0 0 48 48" aria-hidden="true"><rect x="2" y="8" width="44" height="32" rx="10" fill="#ffb547"/><circle cx="15" cy="24" r="6" fill="#2a1600"/><rect x="12" y="21" width="6" height="6" rx="1" fill="#ffb547"/><circle cx="31" cy="21" r="3" fill="#2a1600"/><circle cx="37" cy="27" r="3" fill="#2a1600"/></svg>
       <div><h1>Ruang Main</h1><p>Semua game buatanmu, satu pintu. Pilih, lalu main.</p></div>
     </div>
-    <div class="count"><button class="btn admin-btn" id="adminBtn" hidden>Admin · Kode redeem</button><span>Total game: <b id="nGames">4</b></span></div>
+    <div class="count"><button class="btn admin-btn" id="adminBtn" hidden>Admin · Kode redeem</button><span>Total game: <b id="nGames">5</b></span></div>
   </header>
 
   <section class="feature" id="feature" aria-label="Game pilihan"></section>
@@ -185,6 +191,8 @@ header.top { display: flex; align-items: flex-end; justify-content: space-betwee
 
 <script>
 const GAMES = [
+  { id: 'dragon-roost', title: 'Dragon Roost', sub: 'Eldoria', genre: 'Simulasi', file: 'games/dragon-roost.html', thumb: 'thumbs/dragon-roost.jpg',
+    desc: 'Bangun pulau terapung, tetaskan telur, dan kawinkan 64 jenis naga dari 10 elemen, termasuk 9 naga legendaris. Adu naga di arena.', meta: ['Portrait', '64 naga', 'Breeding'], added: 6 },
   { id: 'kage-blade', title: 'Kage Blade', sub: 'Stickman Ninja Idle', genre: 'Idle RPG', file: 'games/kage-blade.html', thumb: 'thumbs/kage-blade.jpg',
     desc: 'Ninja stickman bertarung sendiri melewati 7 region Jepang. Latih statistik, summon pedang dan skill, taklukkan dungeon, lalu ascend.', meta: ['Portrait', 'Auto-battle', 'Speed 2×'], added: 5 },
   { id: 'pet-guardians', title: 'Pet Guardians', sub: 'Eldoria', genre: 'Tower Defense', file: 'games/pet-guardians.html', thumb: 'thumbs/pet-guardians.jpg',
@@ -244,9 +252,10 @@ window.addEventListener('hashchange', () => { const id = location.hash.slice(1);
 
 /* ---------- Portal redeem codes (shared db) ---------- */
 const CODE_KEY = 'ruangmain.codes';
-const RESERVED = ['KAGEBLADE', 'NINJAWAY', 'SAKURA2026', 'PETGUARD', 'ELDORIAPETS', 'MOONLIGHT', 'ELDORIA', 'WARCHEST', 'SAFEHAVEN', 'DRAGONFIRE', 'WELCOME2026', 'CROWNHOLD', 'ROYALARMY'];
+const RESERVED = ['KAGEBLADE', 'NINJAWAY', 'SAKURA2026', 'PETGUARD', 'ELDORIAPETS', 'MOONLIGHT', 'ELDORIA', 'WARCHEST', 'SAFEHAVEN', 'DRAGONFIRE', 'WELCOME2026', 'CROWNHOLD', 'ROYALARMY', 'DRAGONROOST', 'HATCHLING', 'WYRMFIRE'];
 const REWARDS = {
   all: [['gems', 'Gem'], ['gold', 'Gold']],
+  'dragon-roost': [['gems', 'Gem'], ['gold', 'Gold'], ['food', 'Makanan naga']],
   'kage-blade': [['gems', 'Gem'], ['gold', 'Gold']],
   'pet-guardians': [['gems', 'Gem'], ['gold', 'Gold'], ['food', 'Makanan pet'], ['commonEgg', 'Telur biasa'], ['mysticEgg', 'Telur mistis']],
   eldoria: [['gems', 'Gem'], ['gold', 'Gold'], ['wood', 'Kayu'], ['stone', 'Batu'], ['food', 'Makanan'], ['runes', 'Rune'], ['xp', 'XP']],
@@ -341,4 +350,5 @@ render();
 { const id = location.hash.slice(1); if (GAMES.some(g => g.id === id)) open(id, false); }
 </script>
 
-</body></html>
+</body>
+</html>

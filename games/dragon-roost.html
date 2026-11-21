@@ -1,0 +1,1734 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#5ab4f0">
+  <title>Eldoria: Dragon Roost</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+/* Dragon Roost — sky island UI: soft wood panels, gold trim, rounded type. */
+:root {
+  --sky: #5ab4f0; --panel: #fff8ea; --panel2: #f4e6c8; --wood: #a8703e; --wood2: #7a4c26; --ink: #3a2418; --muted: #8a6a50;
+  --gold: #ffc22e; --gold2: #e08a10; --green: #4cbc4a; --green2: #2a8a30; --red: #e8454a; --blue: #3a9cff; --purple: #9a5ae0;
+  --r0: #9aa8b8; --r1: #3a9cff; --r2: #b45aff; --r3: #ffa000;
+  --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #2a6aa8; color: var(--ink); font: 700 14px/1.3 'Nunito', system-ui, sans-serif; user-select: none; -webkit-user-select: none; overscroll-behavior: none; }
+button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; touch-action: manipulation; }
+#app { position: fixed; inset: 0; max-width: 560px; margin: 0 auto; overflow: hidden; background: var(--sky); box-shadow: 0 0 60px rgba(0,0,0,0.35); }
+canvas { display: block; }
+
+/* ---------- Title ---------- */
+#title { position: absolute; inset: 0; }
+#titleCv { position: absolute; inset: 0; width: 100%; height: 100%; }
+.title-wrap { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 30px 20px calc(48px + var(--safe-b)); background: linear-gradient(0deg, rgba(20,40,80,0.75), rgba(20,40,80,0)); text-align: center; }
+.logo { display: flex; flex-direction: column; align-items: center; }
+.logo small { font: 600 16px 'Fredoka', sans-serif; letter-spacing: 6px; text-transform: uppercase; color: #fff4c8; text-shadow: 0 2px 0 rgba(0,0,0,0.3); }
+.logo b { font: 700 56px/0.95 'Fredoka', sans-serif; color: #fff; text-shadow: 0 4px 0 #c2501a, 0 7px 0 #7a2a10, 0 10px 18px rgba(0,0,0,0.35); letter-spacing: 1px; }
+.logo i { font-style: normal; margin-top: 8px; font-weight: 900; color: #ffe8a0; letter-spacing: 2px; font-size: 13px; }
+.hint { margin: 0; color: #e8f4ff; font-size: 12px; }
+
+/* ---------- Buttons ---------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; border-radius: 14px; font: 600 15px 'Fredoka', sans-serif; color: #fff; background: linear-gradient(180deg, #5ab4ff, #2a7ae0); box-shadow: 0 4px 0 #1a4a98, inset 0 2px 0 rgba(255,255,255,0.35); text-shadow: 0 1px 0 rgba(0,0,0,0.25); transition: transform .08s; }
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #1a4a98; }
+.btn.gold { background: linear-gradient(180deg, #ffd85a, #f0a018); box-shadow: 0 4px 0 #a86008, inset 0 2px 0 rgba(255,255,255,0.45); color: #5a2a04; text-shadow: none; }
+.btn.green { background: linear-gradient(180deg, #6ad85a, #2ea838); box-shadow: 0 4px 0 #1a6a20, inset 0 2px 0 rgba(255,255,255,0.35); }
+.btn.red { background: linear-gradient(180deg, #ff7a6a, #d8343a); box-shadow: 0 4px 0 #8a1a20, inset 0 2px 0 rgba(255,255,255,0.35); }
+.btn.purple { background: linear-gradient(180deg, #c48aff, #8a4ad8); box-shadow: 0 4px 0 #5a2a98, inset 0 2px 0 rgba(255,255,255,0.35); }
+.btn.ghost { background: #ead8b4; color: var(--ink); box-shadow: 0 3px 0 #b89a6a; text-shadow: none; }
+.btn[disabled], .btn.off { filter: grayscale(0.8) brightness(0.95); opacity: 0.6; }
+.btn.big { font-size: 24px; padding: 14px 56px; border-radius: 20px; animation: bounce 1.4s infinite; }
+.btn.small { padding: 7px 12px; font-size: 13px; border-radius: 11px; }
+@keyframes bounce { 50% { transform: translateY(-4px) scale(1.03); } }
+
+/* ---------- Main / HUD ---------- */
+#main { position: absolute; inset: 0; }
+#world { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
+#hud { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: 6px; padding: calc(8px + var(--safe-t)) 10px 0; pointer-events: none; }
+#hud > * { pointer-events: auto; }
+.lvl { position: relative; width: 46px; height: 46px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ffe68a, #f0a018); border: 3px solid #fff; box-shadow: 0 3px 0 rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; flex: none; }
+.lvl b { font: 700 20px 'Fredoka', sans-serif; color: #5a2a04; }
+.lvl .xp { position: absolute; left: 4px; right: 4px; bottom: -8px; height: 7px; border-radius: 6px; background: rgba(0,0,0,0.35); overflow: hidden; border: 1.5px solid #fff; }
+.lvl .xp i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #8af07a, #3ac040); }
+.res { flex: 1; min-width: 0; display: flex; align-items: center; gap: 4px; padding: 4px 8px 4px 5px; border-radius: 99px; background: rgba(255,255,255,0.88); border: 2px solid #fff; box-shadow: 0 3px 0 rgba(0,0,0,0.18); }
+.res span { font-size: 16px; } .res b { font: 600 15px 'Fredoka', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.res.gem b { color: #1a6ad0; }
+.round { width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,0.88); border: 2px solid #fff; box-shadow: 0 3px 0 rgba(0,0,0,0.18); font-size: 18px; flex: none; }
+.pill { position: absolute; right: 10px; top: calc(66px + var(--safe-t)); padding: 8px 14px; border-radius: 99px; background: linear-gradient(180deg, #ffd85a, #f0a018); color: #5a2a04; font: 600 14px 'Fredoka', sans-serif; box-shadow: 0 3px 0 #a86008; animation: bounce 1.6s infinite; }
+#dock { position: absolute; left: 8px; right: 8px; bottom: calc(8px + var(--safe-b)); display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding: 6px; border-radius: 22px; background: linear-gradient(180deg, #c8884a, #8a5428); border: 3px solid #e8b878; box-shadow: 0 6px 0 rgba(0,0,0,0.25); }
+#dock button { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 0 5px; border-radius: 15px; background: linear-gradient(180deg, #fff4dc, #f0d8a8); box-shadow: 0 3px 0 #a8703e; }
+#dock button:active { transform: translateY(2px); box-shadow: 0 1px 0 #a8703e; }
+#dock i { font-style: normal; font-size: 24px; line-height: 1.1; }
+#dock span { font: 600 11px 'Fredoka', sans-serif; color: var(--wood2); }
+.badge { position: absolute; top: -4px; right: 6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--red); color: #fff; font: 800 11px/18px 'Nunito'; border: 2px solid #fff; }
+
+/* ---------- Sheet ---------- */
+#sheet { position: absolute; inset: 0; z-index: 20; background: rgba(20,30,60,0.45); display: flex; align-items: flex-end; justify-content: center; }
+.panel { width: 100%; max-height: 86%; overflow-y: auto; background: var(--panel); border-radius: 26px 26px 0 0; border-top: 5px solid #e8b878; padding: 14px 14px calc(18px + var(--safe-b)); box-shadow: 0 -10px 40px rgba(0,0,0,0.3); animation: up 0.22s ease-out; -webkit-overflow-scrolling: touch; }
+.panel.center { border-radius: 26px; margin: auto 16px; max-height: 80%; border: 5px solid #e8b878; text-align: center; }
+#sheet.mid { align-items: center; }
+@keyframes up { from { transform: translateY(40px); opacity: 0; } }
+.ph { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.ph h2 { margin: 0; flex: 1; font: 700 22px 'Fredoka', sans-serif; color: var(--wood2); }
+.ph .x { width: 36px; height: 36px; border-radius: 50%; background: #ead8b4; font: 800 18px 'Nunito'; color: var(--wood2); box-shadow: 0 3px 0 #b89a6a; }
+.sub { color: var(--muted); font-size: 13px; margin: 0 0 10px; }
+.card { background: #fff; border-radius: 16px; padding: 10px; border: 2px solid #f0dcb4; box-shadow: 0 3px 0 #e8d0a0; margin-bottom: 8px; }
+.row { display: flex; align-items: center; gap: 8px; }
+.row.wrap { flex-wrap: wrap; }
+.grow { flex: 1; min-width: 0; }
+.bar { height: 14px; border-radius: 8px; background: #ead8b4; overflow: hidden; position: relative; border: 2px solid #d8bc8a; }
+.bar i { display: block; height: 100%; background: linear-gradient(90deg, #ffd85a, #f0a018); }
+.bar.green i { background: linear-gradient(90deg, #8af07a, #3ac040); }
+.bar.pink i { background: linear-gradient(90deg, #ffa8c8, #ff4a8a); }
+.bar span { position: absolute; inset: 0; text-align: center; font: 800 10px/10px 'Nunito'; color: var(--ink); }
+.tag { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 99px; font: 800 11px 'Nunito'; background: #f4e6c8; color: var(--wood2); }
+.rar0 { color: var(--r0); } .rar1 { color: var(--r1); } .rar2 { color: var(--r2); } .rar3 { color: var(--r3); }
+.bg0 { background: #e8eef4; } .bg1 { background: #dcecff; } .bg2 { background: #f0e0ff; } .bg3 { background: #fff0cc; }
+.dcard { display: flex; align-items: center; gap: 10px; }
+.dcard canvas { width: 72px; height: 64px; border-radius: 12px; flex: none; }
+.dcard .info { flex: 1; min-width: 0; }
+.dcard .info b { display: block; font: 600 15px 'Fredoka', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dcard .info small { color: var(--muted); font-size: 12px; }
+.acts { display: flex; gap: 6px; flex-wrap: wrap; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.tile { position: relative; background: #fff; border-radius: 14px; border: 2px solid #f0dcb4; box-shadow: 0 3px 0 #e8d0a0; padding: 6px; text-align: center; }
+.tile canvas { width: 100%; height: auto; aspect-ratio: 1.15; border-radius: 10px; }
+.tile b { display: block; font: 600 12px 'Fredoka', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile small { display: block; font-size: 11px; color: var(--muted); }
+.tile.locked { opacity: 0.55; }
+.tile .corner { position: absolute; top: 4px; right: 6px; font-size: 13px; }
+.tabs { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 10px; padding-bottom: 2px; }
+.tabs button { flex: none; padding: 7px 12px; border-radius: 99px; background: #ead8b4; font: 600 13px 'Fredoka'; color: var(--wood2); }
+.tabs button.on { background: var(--wood); color: #fff; }
+.pick { border: 3px solid transparent; }
+.pick.sel { border-color: var(--blue); box-shadow: 0 0 0 3px #bfe0ff; }
+.odds { display: flex; flex-wrap: wrap; gap: 6px; }
+.odds span { padding: 4px 8px; border-radius: 10px; background: #fff; border: 2px solid #f0dcb4; font-size: 12px; }
+.big-reward { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; font: 700 24px 'Fredoka'; margin: 8px 0; }
+.hero-art { width: 220px; height: 190px; margin: 0 auto; display: block; }
+.toggle { width: 50px; height: 28px; border-radius: 99px; background: #d8c8a8; position: relative; flex: none; }
+.toggle::after { content: ''; position: absolute; left: 3px; top: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+.toggle.on { background: var(--green); } .toggle.on::after { left: 25px; }
+input.code { flex: 1; min-width: 0; padding: 10px; border-radius: 12px; border: 2px solid #e0c898; background: #fff; font: 800 15px 'Nunito'; text-transform: uppercase; color: var(--ink); }
+
+/* ---------- Fight ---------- */
+#fight { position: absolute; inset: 0; z-index: 15; background: #2a1a10; display: flex; flex-direction: column; }
+#fightCv { width: 100%; aspect-ratio: 360 / 300; max-height: 62vh; flex: none; }
+#fightUi { flex: 1; padding: 12px 12px calc(14px + var(--safe-b)); background: linear-gradient(180deg, #8a5428, #5a3418); display: flex; flex-direction: column; gap: 10px; }
+.moves { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.move { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; border-radius: 14px; color: #fff; font: 600 15px 'Fredoka'; text-align: left; box-shadow: 0 4px 0 rgba(0,0,0,0.35), inset 0 2px 0 rgba(255,255,255,0.3); }
+.move small { font: 800 11px 'Nunito'; opacity: 0.9; }
+.move[disabled] { filter: grayscale(0.9); opacity: 0.55; }
+.move.wide { grid-column: 1 / -1; }
+
+#toast { position: absolute; left: 50%; top: 18%; transform: translateX(-50%); z-index: 40; display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none; }
+#toast div { padding: 9px 16px; border-radius: 14px; background: rgba(40,24,16,0.92); color: #fff; font: 600 14px 'Fredoka'; animation: toast 2.2s forwards; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+@keyframes toast { 0% { opacity: 0; transform: translateY(10px) scale(0.9); } 10%, 80% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-10px); } }
+.float { position: absolute; z-index: 30; pointer-events: none; font: 700 20px 'Fredoka'; color: #fff; text-shadow: 0 2px 0 #7a4c26, 0 0 6px rgba(0,0,0,0.4); animation: rise 1.1s forwards; }
+@keyframes rise { to { transform: translateY(-50px); opacity: 0; } }
+
+</style>
+</head>
+<body>
+<div id="app">
+  <section id="title">
+    <canvas id="titleCv"></canvas>
+    <div class="title-wrap">
+      <div class="logo"><small>Eldoria</small><b>Dragon Roost</b><i>Hatch · Breed · Battle</i></div>
+      <button class="btn big gold" id="startBtn">Play</button>
+      <p class="hint">Offline game · progress saves on this device</p>
+    </div>
+  </section>
+
+  <section id="main" hidden>
+    <canvas id="world"></canvas>
+    <header id="hud">
+      <div class="lvl" id="lvlBox"><b id="hLvl">1</b><div class="xp"><i id="hXp"></i></div></div>
+      <div class="res"><span>🪙</span><b id="hGold">0</b></div>
+      <div class="res"><span>🍖</span><b id="hFood">0</b></div>
+      <div class="res gem"><span>💎</span><b id="hGems">0</b></div>
+      <button class="round" id="setBtn" aria-label="Settings">⚙️</button>
+    </header>
+    <button id="collectAll" class="pill" hidden>🪙 Collect all</button>
+    <nav id="dock">
+      <button data-open="shop"><i>🏪</i><span>Shop</span></button>
+      <button data-open="breed"><i>💞</i><span>Breed</span></button>
+      <button data-open="book"><i>📖</i><span>Dragons</span></button>
+      <button data-open="arena"><i>⚔️</i><span>Arena</span></button>
+      <button data-open="quests"><i>📜</i><span>Quests</span></button>
+    </nav>
+  </section>
+
+  <section id="fight" hidden>
+    <canvas id="fightCv"></canvas>
+    <div id="fightUi">
+      <div class="moves" id="moves"></div>
+      <div class="row"><button class="btn small" id="autoFight">Auto: off</button><button class="btn small ghost" id="fleeBtn">Leave</button></div>
+    </div>
+  </section>
+
+  <div id="sheet" hidden><div class="panel" id="panel"></div></div>
+  <div id="toast"></div>
+</div>
+<script>
+/* =====================================================================
+ * Eldoria: Dragon Roost — data.js
+ * Elements, all 64 dragons, buildings, crops, arena ladder, formulas.
+ * An original game: every dragon, name and drawing is our own.
+ * ===================================================================== */
+const DR = (typeof window !== 'undefined' ? window : globalThis).DR = {};
+DR.SAVE_KEY = 'dragonroost.save.v1';
+DR.RARITY = [
+  { id: 'common', name: 'Common', color: '#b8c4d0' },
+  { id: 'rare', name: 'Rare', color: '#5aa8ff' },
+  { id: 'epic', name: 'Epic', color: '#c46aff' },
+  { id: 'legend', name: 'Legendary', color: '#ffb02e' },
+];
+
+/* ---------------- Elements ---------------- */
+DR.ELEMENTS = [
+  { id: 'fire', name: 'Fire', icon: '🔥', c1: '#ff6a2a', c2: '#ffd23f', dk: '#9a2a12', r: 0, lv: 1 },
+  { id: 'water', name: 'Water', icon: '💧', c1: '#3a9cff', c2: '#a8f0ff', dk: '#1a4a98', r: 0, lv: 1 },
+  { id: 'earth', name: 'Earth', icon: '🪨', c1: '#b47a44', c2: '#ecc890', dk: '#5a361a', r: 0, lv: 2 },
+  { id: 'nature', name: 'Nature', icon: '🌿', c1: '#56c244', c2: '#e0f48a', dk: '#24601e', r: 0, lv: 3 },
+  { id: 'storm', name: 'Storm', icon: '⚡', c1: '#ffcf2a', c2: '#8a6aff', dk: '#8a5a06', r: 1, lv: 5 },
+  { id: 'ice', name: 'Ice', icon: '❄️', c1: '#9ae0ff', c2: '#ffffff', dk: '#3a78a8', r: 1, lv: 6 },
+  { id: 'metal', name: 'Metal', icon: '⚙️', c1: '#98a4b8', c2: '#eef2f8', dk: '#465064', r: 1, lv: 8 },
+  { id: 'shadow', name: 'Shadow', icon: '🌑', c1: '#4e2c74', c2: '#d04aff', dk: '#1c0a30', r: 2, lv: 11 },
+  { id: 'light', name: 'Light', icon: '☀️', c1: '#fff0b8', c2: '#ffbf2a', dk: '#c09030', r: 2, lv: 13 },
+  { id: 'arcane', name: 'Arcane', icon: '🔮', c1: '#e04ab8', c2: '#5ae8ff', dk: '#741666', r: 2, lv: 15 },
+];
+DR.EL = {}; DR.ELEMENTS.forEach((e, i) => { e.i = i; DR.EL[e.id] = e; });
+/* Element strengths: attacker element → defenders it hits hard. */
+DR.STRONG = {
+  fire: ['nature', 'ice', 'metal'], water: ['fire', 'earth'], earth: ['storm', 'fire', 'metal'], nature: ['water', 'earth'],
+  storm: ['water', 'metal'], ice: ['nature', 'storm'], metal: ['ice', 'shadow'], shadow: ['light', 'arcane'],
+  light: ['shadow', 'ice'], arcane: ['metal', 'light'],
+};
+
+/* ---------------- Dragons ---------------- */
+const PURE = { fire: 'Emberling', water: 'Tidefin', earth: 'Boulderback', nature: 'Mossclaw', storm: 'Voltwing', ice: 'Frostfang', metal: 'Ironscale', shadow: 'Nightshade', light: 'Sunbeam', arcane: 'Runeweaver' };
+const HYB = {
+  'fire+water': 'Steamjaw', 'fire+earth': 'Magmaback', 'fire+nature': 'Ashbloom', 'fire+storm': 'Thunderblaze', 'fire+ice': 'Frostfire', 'fire+metal': 'Forgeheart', 'fire+shadow': 'Hellcinder', 'fire+light': 'Solflare', 'fire+arcane': 'Phoenixia',
+  'water+earth': 'Mudsnout', 'water+nature': 'Lilyfin', 'water+storm': 'Tempest', 'water+ice': 'Glacier', 'water+metal': 'Anchorclaw', 'water+shadow': 'Abyssal', 'water+light': 'Pearlwing', 'water+arcane': 'Mermystic',
+  'earth+nature': 'Grovehorn', 'earth+storm': 'Quakebolt', 'earth+ice': 'Permafrost', 'earth+metal': 'Golemhide', 'earth+shadow': 'Cryptstone', 'earth+light': 'Amberhorn', 'earth+arcane': 'Geodite',
+  'nature+storm': 'Thornspark', 'nature+ice': 'Wintermoss', 'nature+metal': 'Clockvine', 'nature+shadow': 'Nightbloom', 'nature+light': 'Blossomray', 'nature+arcane': 'Faewing',
+  'storm+ice': 'Blizzard', 'storm+metal': 'Teslatron', 'storm+shadow': 'Darkstorm', 'storm+light': 'Aurora', 'storm+arcane': 'Arcbolt',
+  'ice+metal': 'Chromefrost', 'ice+shadow': 'Wraithfrost', 'ice+light': 'Prismscale', 'ice+arcane': 'Starfrost',
+  'metal+shadow': 'Obsidian', 'metal+light': 'Paladin', 'metal+arcane': 'Cogmage',
+  'shadow+light': 'Eclipse', 'shadow+arcane': 'Voidcaller', 'light+arcane': 'Celestia',
+};
+DR.DRAGONS = [];
+for (const e of DR.ELEMENTS) DR.DRAGONS.push({ id: e.id, name: PURE[e.id] + ' Dragon', els: [e.id], r: e.r, kind: 'pure' });
+for (const [k, n] of Object.entries(HYB)) {
+  const [a, b] = k.split('+'), ra = DR.EL[a].r, rb = DR.EL[b].r;
+  const r = Math.min(2, Math.max(ra, rb) + (ra >= 1 && rb >= 1 ? 1 : 0));
+  DR.DRAGONS.push({ id: a + '_' + b, name: n + ' Dragon', els: [a, b], r, kind: 'hybrid' });
+}
+/* Legendaries: bred from a pair of specific dragons (any order). */
+DR.LEGENDS = [
+  { id: 'pyroclast', name: 'Pyroclast', els: ['fire', 'earth'], recipe: ['fire_earth', 'fire_metal'], desc: 'Born in the heart of a volcano. Its scales are cooling lava.' },
+  { id: 'leviathan', name: 'Leviathan', els: ['water', 'shadow'], recipe: ['water_shadow', 'water_storm'], desc: 'The tide itself bows when it surfaces.' },
+  { id: 'yggdra', name: 'Yggdra', els: ['nature', 'light'], recipe: ['earth_nature', 'nature_light'], desc: 'An ancient tree grows along its spine.' },
+  { id: 'stormlord', name: 'Stormlord', els: ['storm', 'light'], recipe: ['storm_light', 'fire_storm'], desc: 'Every wingbeat is a thunderclap.' },
+  { id: 'glacius', name: 'Glacius', els: ['ice', 'arcane'], recipe: ['ice_arcane', 'water_ice'], desc: 'Carries a frozen star inside its chest.' },
+  { id: 'chronos', name: 'Chronos', els: ['metal', 'arcane'], recipe: ['metal_arcane', 'nature_metal'], desc: 'Its clockwork heart can pause a single second.' },
+  { id: 'umbra', name: 'Umbra', els: ['shadow', 'arcane'], recipe: ['shadow_light', 'nature_shadow'], desc: 'A dragon made of the space between stars.' },
+  { id: 'solaris', name: 'Solaris', els: ['light', 'fire'], recipe: ['fire_light', 'light_arcane'], desc: 'The first sunrise took the shape of a dragon.' },
+  { id: 'prismara', name: 'Prismara', els: ['arcane', 'storm'], recipe: ['ice_light', 'storm_light'], desc: 'A rainbow wyrm that shimmers in every colour.' },
+];
+for (const L of DR.LEGENDS) DR.DRAGONS.push(Object.assign({ r: 3, kind: 'legend' }, L, { name: L.name + ' Dragon' }));
+DR.D = {}; DR.DRAGONS.forEach((d, i) => { d.n = i; DR.D[d.id] = d; });
+/** Dragon id for an element pair (pure if equal). */
+DR.pairId = (a, b) => { if (a === b) return a; const k = DR.D[a + '_' + b] ? a + '_' + b : b + '_' + a; return k; };
+
+/* ---------------- Formulas ---------------- */
+DR.MAX_LEVEL = 20;
+DR.BREED_LEVEL = 4;
+DR.goldRate = (d, lv) => [10, 16, 28, 50][d.r] * (1 + 0.28 * (lv - 1)); // gold per minute
+DR.foodCost = lv => Math.round(10 * Math.pow(1.42, lv - 1)); // food to go from lv to lv+1
+DR.breedTime = r => [40, 150, 420, 900][r]; // seconds
+DR.hatchTime = r => [20, 90, 240, 600][r];
+DR.hatchXp = r => [40, 120, 350, 1200][r];
+DR.sellGold = (d, lv) => Math.round([60, 200, 600, 3000][d.r] * (1 + 0.15 * (lv - 1)));
+DR.stats = (d, lv) => { const m = [1, 1.22, 1.5, 2.1][d.r]; return { hp: Math.round((70 + 14 * lv) * m), atk: Math.round((12 + 3.2 * lv) * m) }; };
+DR.xpForLevel = L => Math.round(80 * Math.pow(L, 1.55)); // xp to go from L to L+1
+DR.speedCost = sec => Math.max(1, Math.ceil(sec / 45)); // gems to finish a timer
+
+/* ---------------- Buildings ---------------- */
+DR.HABITAT = {
+  cap: lv => [2, 3, 4][lv - 1],
+  store: lv => [500, 1500, 4000][lv - 1],
+  upCost: lv => [800, 4000][lv - 1],
+  cost: (el, owned) => Math.round([150, 400, 600, 900, 2500, 3500, 5000, 12000, 15000, 20000][DR.EL[el].i] * Math.pow(1.6, owned)),
+};
+DR.FARM_COST = n => Math.round(200 * Math.pow(1.9, n));
+DR.CROPS = [
+  { id: 'berry', name: 'Dragonberry', icon: '🫐', cost: 30, food: 40, time: 30, lv: 1 },
+  { id: 'sun', name: 'Sunfruit', icon: '🍊', cost: 120, food: 180, time: 180, lv: 2 },
+  { id: 'star', name: 'Starmelon', icon: '🍈', cost: 450, food: 800, time: 900, lv: 5 },
+  { id: 'moon', name: 'Moonpumpkin', icon: '🎃', cost: 1500, food: 3200, time: 3600, lv: 9 },
+];
+DR.HATCHERY_CAP = lv => [2, 3, 4][lv - 1];
+DR.HATCHERY_UP = lv => [1500, 6000][lv - 1];
+DR.EXPAND_COST = n => [1000, 5000, 20000, 60000, 150000][n];
+DR.EXPAND_LEVEL = n => [3, 6, 10, 14, 18][n];
+/* Egg shop: pure eggs for gold, epic eggs for gems. */
+DR.eggPrice = el => { const e = DR.EL[el]; return e.r === 2 ? { gems: 90 } : { gold: [500, 600, 900, 1200, 4000, 5000, 7000][e.i] }; };
+
+/* ---------------- Arena ladder ---------------- */
+DR.ARENA = [];
+(function () {
+  const names = ['Pip the Squire', 'Mara of the Reeds', 'Brannoc', 'Lady Vesh', 'Old Torvin', 'Sela Brightwing', 'Kaito the Wanderer', 'Grimgar', 'Iris Moonveil', 'Duke Calder', 'Nyx', 'Hollow Knight Arn', 'Seraphine', 'The Twin Wardens', 'Archmage Olen', 'Queen Ysolde', 'Vorthak', 'High Druid Fen', 'Saint Aurel', 'The Dragon King'];
+  let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  for (let i = 0; i < 40; i++) {
+    const n = Math.min(3, 1 + Math.floor(i / 6)), lv = Math.min(20, 1 + Math.floor(i * 0.5) + (i > 30 ? 2 : 0));
+    const pool = DR.DRAGONS.filter(d => d.r <= (i < 8 ? 0 : i < 18 ? 1 : i < 32 ? 2 : 3) && (d.kind !== 'legend' || i >= 34));
+    const team = []; for (let k = 0; k < n; k++) team.push({ id: pool[Math.floor(rnd() * pool.length)].id, lv: Math.max(1, lv - (n - 1 - k)) });
+    DR.ARENA.push({ name: names[Math.floor(i / 2)] + (i % 2 ? ' II' : ''), team, gold: Math.round(150 * Math.pow(1.22, i)), food: Math.round(40 * Math.pow(1.18, i)), gems: (i + 1) % 5 === 0 ? 10 + i : 0, egg: i === 39 ? 'prismara' : (i + 1) % 10 === 0 ? 'legend' : null });
+  }
+})();
+
+/* ---------------- Quests (one-time goals) ---------------- */
+DR.QUESTS = [
+  { id: 'collect', name: 'Collect gold from a habitat', goal: 1, gems: 5, stat: 'collects' },
+  { id: 'feed', name: 'Feed a dragon 5 times', goal: 5, gems: 5, stat: 'feeds' },
+  { id: 'farm', name: 'Harvest 3 crops', goal: 3, gems: 5, stat: 'harvests' },
+  { id: 'habitat2', name: 'Build a Water Habitat', goal: 1, gems: 10, stat: 'hab_water' },
+  { id: 'hatch1', name: 'Hatch 2 eggs', goal: 2, gems: 10, stat: 'hatches' },
+  { id: 'breed1', name: 'Breed your first hybrid dragon', goal: 1, gems: 20, stat: 'hybrids' },
+  { id: 'lv10', name: 'Raise a dragon to level 10', goal: 10, gems: 25, stat: 'maxLevel' },
+  { id: 'win5', name: 'Win 5 arena battles', goal: 5, gems: 25, stat: 'wins' },
+  { id: 'book10', name: 'Discover 10 dragon kinds', goal: 10, gems: 30, stat: 'kinds' },
+  { id: 'hab5', name: 'Own 5 habitats', goal: 5, gems: 20, stat: 'habitats' },
+  { id: 'expand', name: 'Expand your island', goal: 1, gems: 15, stat: 'expansions' },
+  { id: 'book25', name: 'Discover 25 dragon kinds', goal: 25, gems: 60, stat: 'kinds' },
+  { id: 'win20', name: 'Win 20 arena battles', goal: 20, gems: 60, stat: 'wins' },
+  { id: 'legend', name: 'Hatch a legendary dragon', goal: 1, gems: 100, stat: 'legends' },
+  { id: 'lv20', name: 'Raise a dragon to level 20', goal: 20, gems: 80, stat: 'maxLevel' },
+  { id: 'book50', name: 'Discover 50 dragon kinds', goal: 50, gems: 150, stat: 'kinds' },
+];
+
+/* ---------------- Island plots ----------------
+ * Fixed building pads on the island, in world units (island ~1200×900).
+ * `zone` 0 is open at the start, zones 1..5 open with expansions. */
+DR.PLOTS = [
+  [600, 430, 0], [440, 360, 0], [760, 360, 0], [430, 520, 0], [770, 520, 0], [600, 590, 0], [600, 280, 0], [290, 440, 0],
+  [910, 440, 1], [280, 300, 1], [920, 300, 1],
+  [300, 600, 2], [900, 600, 2], [450, 690, 2],
+  [750, 690, 3], [450, 200, 3], [750, 200, 3],
+  [150, 380, 4], [1050, 380, 4], [600, 760, 4],
+  [160, 540, 5], [1040, 540, 5], [600, 140, 5],
+].map(([x, y, zone], i) => ({ i, x, y, zone }));
+
+/* ---------------- Redeem codes (hashed) ---------------- */
+DR.hash = s => { let h = 2166136261; for (const ch of String(s).toUpperCase().trim()) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; } return h.toString(36); };
+DR.CODES = {};
+[['DRAGONROOST', { gems: 150, gold: 2000 }], ['HATCHLING', { food: 1500, gold: 1000 }], ['WYRMFIRE', { gems: 300 }]].forEach(([c, r]) => { DR.CODES[DR.hash(c)] = r; });
+
+DR.fmt = n => { n = Math.floor(n); if (n < 10000) return n.toLocaleString('en-US'); const u = ['K', 'M', 'B', 'T']; let i = -1; while (n >= 1000 && i < 3) { n /= 1000; i++; } return (n >= 100 ? n.toFixed(0) : n.toFixed(1)) + u[i]; };
+DR.time = s => { s = Math.max(0, Math.ceil(s)); if (s < 60) return s + 's'; if (s < 3600) return Math.floor(s / 60) + 'm ' + (s % 60 ? (s % 60) + 's' : ''); return Math.floor(s / 3600) + 'h ' + Math.floor(s % 3600 / 60) + 'm'; };
+
+</script>
+<script>
+/* =====================================================================
+ * Ruang Main portal codes.
+ * Codes made in the portal's admin menu are cached in localStorage by the
+ * portal page (key "ruangmain.codes"). Games served from the same portal
+ * check this list after their own built-in codes. Only a hash of each
+ * code is stored here, never the code itself.
+ * ===================================================================== */
+var RMCodes = (function () {
+  const KEY = 'ruangmain.codes';
+  const norm = s => String(s || '').trim().toUpperCase().replace(/\s+/g, '');
+  function fnv(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h.toString(36); }
+  /** Portal hash of a code (same function in the portal page). */
+  const hash = code => { const n = norm(code); return fnv('ruangmain:' + n) + fnv(n + ':rm'); };
+  function list() { try { const d = JSON.parse(localStorage.getItem(KEY) || 'null'); return d && Array.isArray(d.codes) ? d.codes : []; } catch (e) { return []; } }
+  /** Returns a game-ready entry { hash, label, reward, start, expires } or null. */
+  function find(code, game) {
+    const n = norm(code); if (!n) return null;
+    const ph = hash(n), e = list().find(c => c && c.ph === ph && c.active !== false && (c.game === 'all' || c.game === game));
+    if (!e) return null;
+    const reward = {}; for (const k in (e.reward || {})) { const v = Math.floor(+e.reward[k]); if (v > 0) reward[k] = v; }
+    return { hash: 'rm:' + ph, label: e.label || 'Gift', reward, start: e.start || null, expires: e.expires || null };
+  }
+  return { find, hash, norm };
+})();
+
+</script>
+<script>
+/* =====================================================================
+ * Eldoria: Dragon Roost — state.js
+ * Save data and the whole economy. Every timer is real time, so habitats
+ * keep earning, crops keep growing and eggs keep warming while away.
+ * ===================================================================== */
+DR.State = (function () {
+  const dayKey = T => { const d = new Date(T); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const ok = (o = {}) => Object.assign({ ok: true }, o), no = reason => ({ ok: false, reason });
+
+  function defaults(now = Date.now()) {
+    const s = {
+      v: 1, gold: 1500, food: 200, gems: 60, xp: 0, level: 1, nextUid: 1,
+      buildings: {}, dragons: {}, eggs: [], breeding: null, zones: 0,
+      seen: {}, arena: { cleared: 0 }, stats: {}, questsDone: {}, day: '', streak: 0, redeemed: [],
+      settings: { sound: true, music: true }, lastSeen: now, created: now,
+    };
+    s.buildings[0] = { type: 'habitat', el: 'fire', lv: 1, gold: 0, last: now, dragons: [] };
+    s.buildings[1] = { type: 'hatchery', lv: 1 };
+    s.buildings[2] = { type: 'farm', crop: null };
+    s.buildings[6] = { type: 'breed' };
+    s.buildings[5] = { type: 'arena' };
+    const u = addDragon(s, 'fire', 1, 0); s.dragons[u].lv = 2;
+    return s;
+  }
+  function addDragon(s, id, lv, home) {
+    const uid = 'd' + (s.nextUid++);
+    s.dragons[uid] = { uid, id, lv, home };
+    if (home != null && s.buildings[home]) s.buildings[home].dragons.push(uid);
+    if (!s.seen[id]) s.seen[id] = true;
+    stat(s, 'kinds', Object.keys(s.seen).length, true);
+    return uid;
+  }
+  /** Cleans a loaded or hand-edited save. */
+  function validate(raw, now = Date.now()) {
+    if (!raw || typeof raw !== 'object' || raw.v !== 1) return defaults(now);
+    const d = defaults(now);
+    const num = (v, def, lo, hi) => Number.isFinite(+v) ? clamp(+v, lo, hi) : def;
+    for (const k of ['gold', 'food', 'gems', 'xp']) d[k] = Math.floor(num(raw[k], d[k], 0, 1e12));
+    d.level = Math.floor(num(raw.level, 1, 1, 99)); d.nextUid = Math.floor(num(raw.nextUid, 2, 1, 1e9)); d.zones = Math.floor(num(raw.zones, 0, 0, 5));
+    d.buildings = {}; d.dragons = {};
+    const plots = DR.PLOTS.length;
+    if (raw.buildings) for (const k of Object.keys(raw.buildings)) {
+      const i = +k, b = raw.buildings[k]; if (!(i >= 0 && i < plots) || !b) continue;
+      if (b.type === 'habitat' && DR.EL[b.el]) d.buildings[i] = { type: 'habitat', el: b.el, lv: Math.floor(num(b.lv, 1, 1, 3)), gold: num(b.gold, 0, 0, 1e9), last: num(b.last, now, 0, now), dragons: [] };
+      else if (b.type === 'farm') d.buildings[i] = { type: 'farm', crop: b.crop && DR.CROPS.find(c => c.id === b.crop.id) ? { id: b.crop.id, end: num(b.crop.end, now, 0, 1e15) } : null };
+      else if (b.type === 'hatchery') d.buildings[i] = { type: 'hatchery', lv: Math.floor(num(b.lv, 1, 1, 3)) };
+      else if (b.type === 'breed' || b.type === 'arena') d.buildings[i] = { type: b.type };
+    }
+    if (raw.dragons) for (const k of Object.keys(raw.dragons)) {
+      const x = raw.dragons[k]; if (!x || !DR.D[x.id]) continue;
+      const home = d.buildings[x.home] && d.buildings[x.home].type === 'habitat' ? +x.home : null;
+      d.dragons[k] = { uid: k, id: x.id, lv: Math.floor(num(x.lv, 1, 1, DR.MAX_LEVEL)), home };
+      if (home != null) d.buildings[home].dragons.push(k);
+    }
+    if (Array.isArray(raw.eggs)) d.eggs = raw.eggs.filter(e => e && DR.D[e.id]).slice(0, 4).map(e => ({ uid: String(e.uid), id: e.id, end: num(e.end, now, 0, 1e15) }));
+    if (raw.breeding && DR.D[raw.breeding.result]) d.breeding = { a: raw.breeding.a, b: raw.breeding.b, result: raw.breeding.result, end: num(raw.breeding.end, now, 0, 1e15) };
+    if (raw.seen) for (const k of Object.keys(raw.seen)) if (DR.D[k]) d.seen[k] = true;
+    if (raw.arena) d.arena.cleared = Math.floor(num(raw.arena.cleared, 0, 0, DR.ARENA.length));
+    if (raw.stats) for (const k of Object.keys(raw.stats)) d.stats[k] = num(raw.stats[k], 0, 0, 1e12);
+    if (raw.questsDone) for (const q of DR.QUESTS) d.questsDone[q.id] = !!raw.questsDone[q.id];
+    d.day = typeof raw.day === 'string' ? raw.day : ''; d.streak = Math.floor(num(raw.streak, 0, 0, 9999));
+    if (Array.isArray(raw.redeemed)) d.redeemed = raw.redeemed.filter(x => typeof x === 'string').slice(0, 60);
+    if (raw.settings) { d.settings.sound = raw.settings.sound !== false; d.settings.music = raw.settings.music !== false; }
+    d.lastSeen = num(raw.lastSeen, now, 0, now); d.created = num(raw.created, now, 0, now);
+    return d;
+  }
+  function load() { try { const r = localStorage.getItem(DR.SAVE_KEY); return r ? validate(JSON.parse(r)) : defaults(); } catch (e) { return defaults(); } }
+  function save(s) { try { s.lastSeen = Date.now(); localStorage.setItem(DR.SAVE_KEY, JSON.stringify(s)); return true; } catch (e) { return false; } }
+
+  /* ---------------- Stats, xp, quests ---------------- */
+  function stat(s, k, v, max) { s.stats[k] = max ? Math.max(s.stats[k] || 0, v) : (s.stats[k] || 0) + v; }
+  function addXp(s, n) {
+    s.xp += Math.round(n); const ups = [];
+    while (s.xp >= DR.xpForLevel(s.level) && s.level < 60) { s.xp -= DR.xpForLevel(s.level); s.level++; const g = 5 + s.level * 2; s.gems += g; ups.push({ level: s.level, gems: g }); }
+    return ups;
+  }
+  function questProgress(s, q) { return Math.min(q.goal, s.stats[q.stat] || 0); }
+  function claimQuest(s, id) {
+    const q = DR.QUESTS.find(x => x.id === id); if (!q) return no('Unknown quest');
+    if (s.questsDone[id]) return no('Already claimed'); if (questProgress(s, q) < q.goal) return no('Not finished yet');
+    s.questsDone[id] = true; s.gems += q.gems; return ok({ gems: q.gems });
+  }
+  function claimDaily(s, now = Date.now()) {
+    const k = dayKey(now); if (s.day === k) return no('Come back tomorrow');
+    const y = dayKey(now - 86400000); s.streak = s.day === y ? s.streak + 1 : 1; s.day = k;
+    const day = ((s.streak - 1) % 7) + 1, gems = day === 7 ? 30 : 5 + day, gold = 200 * day + 50 * s.level, food = 50 * day;
+    s.gems += gems; s.gold += gold; s.food += food; return ok({ day, gems, gold, food });
+  }
+  const dailyReady = (s, now = Date.now()) => s.day !== dayKey(now);
+
+  /* ---------------- Habitats & gold ---------------- */
+  const D = uid => s => s.dragons[uid];
+  function rate(s, b) { let r = 0; for (const u of b.dragons) { const x = s.dragons[u]; if (x) r += DR.goldRate(DR.D[x.id], x.lv); } return r; }
+  /** Brings every habitat's gold up to `now`. */
+  function tick(s, now = Date.now()) {
+    for (const k in s.buildings) { const b = s.buildings[k]; if (b.type !== 'habitat') continue; const dt = Math.max(0, now - b.last) / 60000; b.gold = Math.min(DR.HABITAT.store(b.lv), b.gold + rate(s, b) * dt); b.last = now; }
+  }
+  function collect(s, plot, now = Date.now()) {
+    tick(s, now); const b = s.buildings[plot]; if (!b || b.type !== 'habitat') return no('Not a habitat');
+    const g = Math.floor(b.gold); if (g < 1) return no('No gold yet');
+    b.gold -= g; s.gold += g; stat(s, 'collects', 1); stat(s, 'goldEarned', g); return ok({ gold: g });
+  }
+  function collectAll(s, now = Date.now()) { tick(s, now); let t = 0; for (const k in s.buildings) { const b = s.buildings[k]; if (b.type === 'habitat' && b.gold >= 1) { const g = Math.floor(b.gold); b.gold -= g; t += g; } } if (!t) return no('Nothing to collect'); s.gold += t; stat(s, 'collects', 1); stat(s, 'goldEarned', t); return ok({ gold: t }); }
+  const habitatCount = (s, el) => Object.values(s.buildings).filter(b => b.type === 'habitat' && (!el || b.el === el)).length;
+  const farmCount = s => Object.values(s.buildings).filter(b => b.type === 'farm').length;
+  const plotOpen = (s, i) => DR.PLOTS[i] && DR.PLOTS[i].zone <= s.zones;
+  function buildCost(s, type, el) { return type === 'habitat' ? { gold: DR.HABITAT.cost(el, habitatCount(s, el)) } : type === 'farm' ? { gold: DR.FARM_COST(farmCount(s) - 1) } : null; }
+  function build(s, plot, type, el, now = Date.now()) {
+    if (!plotOpen(s, plot)) return no('Expand the island to use this spot');
+    if (s.buildings[plot]) return no('This spot is taken');
+    if (type === 'habitat') { if (!DR.EL[el]) return no('Unknown element'); if (s.level < DR.EL[el].lv) return no('Reach level ' + DR.EL[el].lv + ' first'); }
+    else if (type !== 'farm') return no('Cannot build that');
+    const c = buildCost(s, type, el); if (s.gold < c.gold) return no('Not enough gold');
+    s.gold -= c.gold;
+    s.buildings[plot] = type === 'habitat' ? { type, el, lv: 1, gold: 0, last: now, dragons: [] } : { type, crop: null };
+    if (type === 'habitat') { stat(s, 'hab_' + el, 1); stat(s, 'habitats', habitatCount(s), true); }
+    const ups = addXp(s, c.gold / 20);
+    return ok({ ups });
+  }
+  function upgradeHabitat(s, plot, now = Date.now()) {
+    const b = s.buildings[plot]; if (!b || b.type !== 'habitat') return no('Not a habitat');
+    if (b.lv >= 3) return no('Fully upgraded'); tick(s, now);
+    const c = DR.HABITAT.upCost(b.lv) * (1 + DR.EL[b.el].i * 0.4); if (s.gold < c) return no('Not enough gold');
+    s.gold -= Math.round(c); b.lv++; return ok({ ups: addXp(s, c / 20) });
+  }
+  function upgradeHatchery(s, plot) {
+    const b = s.buildings[plot]; if (!b || b.type !== 'hatchery') return no('Not a hatchery');
+    if (b.lv >= 3) return no('Fully upgraded'); const c = DR.HATCHERY_UP(b.lv); if (s.gold < c) return no('Not enough gold');
+    s.gold -= c; b.lv++; return ok({ ups: addXp(s, c / 20) });
+  }
+  function expand(s) {
+    if (s.zones >= 5) return no('The island is fully expanded');
+    if (s.level < DR.EXPAND_LEVEL(s.zones)) return no('Reach level ' + DR.EXPAND_LEVEL(s.zones) + ' first');
+    const c = DR.EXPAND_COST(s.zones); if (s.gold < c) return no('Not enough gold');
+    s.gold -= c; s.zones++; stat(s, 'expansions', 1); return ok({ ups: addXp(s, c / 25) });
+  }
+
+  /* ---------------- Farms ---------------- */
+  function plant(s, plot, cropId, now = Date.now()) {
+    const b = s.buildings[plot], c = DR.CROPS.find(x => x.id === cropId);
+    if (!b || b.type !== 'farm' || !c) return no('Not possible'); if (b.crop) return no('Something is already growing');
+    if (s.level < c.lv) return no('Reach level ' + c.lv + ' first'); if (s.gold < c.cost) return no('Not enough gold');
+    s.gold -= c.cost; b.crop = { id: c.id, end: now + c.time * 1000 }; return ok();
+  }
+  function harvest(s, plot, now = Date.now()) {
+    const b = s.buildings[plot]; if (!b || b.type !== 'farm' || !b.crop) return no('Nothing planted');
+    if (now < b.crop.end) return no('Not ripe yet');
+    const c = DR.CROPS.find(x => x.id === b.crop.id); b.crop = null; s.food += c.food; stat(s, 'harvests', 1);
+    return ok({ food: c.food, ups: addXp(s, c.food / 40) });
+  }
+
+  /* ---------------- Dragons ---------------- */
+  function feed(s, uid) {
+    const x = s.dragons[uid]; if (!x) return no('No such dragon');
+    if (x.lv >= DR.MAX_LEVEL) return no('Max level');
+    const c = DR.foodCost(x.lv); if (s.food < c) return no('Not enough food');
+    tick(s); s.food -= c; x.lv++; stat(s, 'feeds', 1); stat(s, 'maxLevel', x.lv, true);
+    return ok({ lv: x.lv, ups: addXp(s, c / 6) });
+  }
+  const fits = (d, b) => b && b.type === 'habitat' && d.els.includes(b.el);
+  const space = (s, b) => b.dragons.length < DR.HABITAT.cap(b.lv);
+  /** Habitats that can take a dragon of this kind. */
+  function homesFor(s, id, except) { const d = DR.D[id]; return Object.keys(s.buildings).map(Number).filter(i => i !== except && fits(d, s.buildings[i]) && space(s, s.buildings[i])); }
+  function moveDragon(s, uid, plot) {
+    const x = s.dragons[uid], b = s.buildings[plot]; if (!x || !b) return no('Not possible');
+    if (!fits(DR.D[x.id], b)) return no('That habitat is the wrong element'); if (!space(s, b)) return no('That habitat is full');
+    tick(s);
+    if (x.home != null) { const h = s.buildings[x.home]; h.dragons = h.dragons.filter(u => u !== uid); }
+    x.home = plot; b.dragons.push(uid); return ok();
+  }
+  function sellDragon(s, uid) {
+    const x = s.dragons[uid]; if (!x) return no('No such dragon');
+    if (Object.keys(s.dragons).length <= 1) return no('Keep at least one dragon');
+    if (s.breeding && (s.breeding.a === uid || s.breeding.b === uid)) return no('This dragon is breeding');
+    tick(s); if (x.home != null) { const h = s.buildings[x.home]; h.dragons = h.dragons.filter(u => u !== uid); }
+    const g = DR.sellGold(DR.D[x.id], x.lv); delete s.dragons[uid]; s.gold += g; return ok({ gold: g });
+  }
+
+  /* ---------------- Eggs, breeding, hatching ---------------- */
+  const hatchery = s => { for (const k in s.buildings) if (s.buildings[k].type === 'hatchery') return s.buildings[k]; return null; };
+  const eggSpace = s => { const h = hatchery(s); return h ? DR.HATCHERY_CAP(h.lv) - s.eggs.length : 0; };
+  function addEgg(s, id, now = Date.now()) { s.eggs.push({ uid: 'e' + (s.nextUid++), id, end: now + DR.hatchTime(DR.D[id].r) * 1000 }); }
+  function buyEgg(s, el, now = Date.now()) {
+    const e = DR.EL[el]; if (!e) return no('Unknown egg'); if (s.level < e.lv) return no('Reach level ' + e.lv + ' first');
+    if (eggSpace(s) <= 0) return no('The hatchery is full');
+    const p = DR.eggPrice(el); if (p.gold && s.gold < p.gold) return no('Not enough gold'); if (p.gems && s.gems < p.gems) return no('Not enough gems');
+    if (p.gold) s.gold -= p.gold; if (p.gems) s.gems -= p.gems;
+    addEgg(s, el, now); return ok();
+  }
+  /** Every possible child of two dragons with its weight. */
+  function breedTable(idA, idB) {
+    const A = DR.D[idA], B = DR.D[idB], w = {};
+    const put = (id, k = 1) => { if (!DR.D[id] || DR.D[id].kind === 'legend') return; w[id] = (w[id] || 0) + [10, 6, 3][DR.D[id].r] * k; };
+    for (const a of A.els) for (const b of B.els) put(DR.pairId(a, b), 1.4);
+    for (const e of new Set([...A.els, ...B.els])) put(e, 1);
+    if (A.kind === 'hybrid') put(A.id, 0.6); if (B.kind === 'hybrid') put(B.id, 0.6);
+    const legend = DR.LEGENDS.find(L => (L.recipe[0] === idA && L.recipe[1] === idB) || (L.recipe[0] === idB && L.recipe[1] === idA));
+    return { w, legend: legend ? legend.id : null };
+  }
+  function rollChild(idA, idB, rnd = Math.random) {
+    const { w, legend } = breedTable(idA, idB);
+    if (legend && rnd() < 0.1) return legend;
+    const tot = Object.values(w).reduce((a, b) => a + b, 0); let x = rnd() * tot;
+    for (const [id, v] of Object.entries(w)) { if ((x -= v) <= 0) return id; }
+    return Object.keys(w)[0];
+  }
+  function startBreed(s, a, b, rnd = Math.random, now = Date.now()) {
+    if (!Object.values(s.buildings).some(x => x.type === 'breed')) return no('Build a Breeding Peak first');
+    if (s.breeding) return no('The Breeding Peak is busy');
+    const A = s.dragons[a], B = s.dragons[b]; if (!A || !B || a === b) return no('Pick two different dragons');
+    if (A.lv < DR.BREED_LEVEL || B.lv < DR.BREED_LEVEL) return no('Both dragons must be level ' + DR.BREED_LEVEL + '+');
+    const result = rollChild(A.id, B.id, rnd);
+    s.breeding = { a, b, result, end: now + DR.breedTime(DR.D[result].r) * 1000 };
+    return ok({ result });
+  }
+  function collectBreed(s, now = Date.now()) {
+    if (!s.breeding) return no('Nothing is breeding'); if (now < s.breeding.end) return no('Still breeding');
+    if (eggSpace(s) <= 0) return no('The hatchery is full');
+    const id = s.breeding.result; s.breeding = null; addEgg(s, id, now);
+    if (DR.D[id].kind === 'hybrid') stat(s, 'hybrids', 1);
+    return ok({ id });
+  }
+  function hatch(s, eggUid, plot, now = Date.now()) {
+    const i = s.eggs.findIndex(e => e.uid === eggUid); if (i < 0) return no('No such egg');
+    const e = s.eggs[i]; if (now < e.end) return no('Not ready to hatch');
+    const b = s.buildings[plot], d = DR.D[e.id]; if (!fits(d, b)) return no('Pick a matching habitat'); if (!space(s, b)) return no('That habitat is full');
+    tick(s, now); s.eggs.splice(i, 1);
+    const isNew = !s.seen[e.id];
+    const uid = addDragon(s, e.id, 1, plot); stat(s, 'hatches', 1); if (d.kind === 'legend') stat(s, 'legends', 1);
+    return ok({ uid, isNew, ups: addXp(s, DR.hatchXp(d.r) * (isNew ? 1.5 : 1)) });
+  }
+  function sellEgg(s, eggUid) { const i = s.eggs.findIndex(e => e.uid === eggUid); if (i < 0) return no('No such egg'); const d = DR.D[s.eggs[i].id]; s.eggs.splice(i, 1); const g = Math.round(DR.sellGold(d, 1) * 0.6); s.gold += g; return ok({ gold: g }); }
+  /** Finishes a timer for gems. kind: 'egg' | 'breed' | 'farm' */
+  function speedUp(s, kind, ref, now = Date.now()) {
+    let end; if (kind === 'egg') { const e = s.eggs.find(x => x.uid === ref); if (!e) return no('No such egg'); end = e.end; }
+    else if (kind === 'breed') { if (!s.breeding) return no('Nothing is breeding'); end = s.breeding.end; }
+    else if (kind === 'farm') { const b = s.buildings[ref]; if (!b || !b.crop) return no('Nothing planted'); end = b.crop.end; } else return no('Unknown timer');
+    const left = (end - now) / 1000; if (left <= 0) return no('Already done');
+    const g = DR.speedCost(left); if (s.gems < g) return no('Not enough gems'); s.gems -= g;
+    if (kind === 'egg') s.eggs.find(x => x.uid === ref).end = now; else if (kind === 'breed') s.breeding.end = now; else s.buildings[ref].crop.end = now;
+    return ok({ gems: g });
+  }
+
+  /* ---------------- Arena rewards ---------------- */
+  function arenaWin(s, idx, now = Date.now()) {
+    const o = DR.ARENA[idx]; if (!o) return no('Unknown opponent');
+    const first = idx === s.arena.cleared; if (idx > s.arena.cleared) return no('Beat the previous opponent first');
+    const r = { gold: first ? o.gold : Math.round(o.gold * 0.25), food: first ? o.food : Math.round(o.food * 0.25), gems: first ? o.gems : 0, egg: null };
+    s.gold += r.gold; s.food += r.food; s.gems += r.gems; stat(s, 'wins', 1);
+    if (first) { s.arena.cleared++; if (o.egg && eggSpace(s) > 0) { const id = o.egg === 'legend' ? DR.LEGENDS[Math.floor(idx / 10) % DR.LEGENDS.length].id : o.egg; addEgg(s, id, now); r.egg = id; } }
+    r.ups = addXp(s, 30 + idx * 12); return ok(r);
+  }
+
+  /* ---------------- Redeem ---------------- */
+  function redeem(s, code, now = Date.now()) {
+    let h = DR.hash(code || ''), r = DR.CODES[h];
+    if (!r && typeof RMCodes !== 'undefined') { const p = RMCodes.find(code, 'dragon-roost'); if (p) { const day = new Date(now).toISOString().slice(0, 10); if (p.expires && day > p.expires) return no('This code has expired'); if (p.start && day < p.start) return no('This code is not active yet'); r = p.reward; h = p.hash; } }
+    if (!r) return no('That code is not valid'); if (s.redeemed.includes(h)) return no('You already used this code');
+    s.redeemed.push(h); for (const k of ['gold', 'food', 'gems']) if (r[k]) s[k] += r[k];
+    if (r.egg && DR.EL[r.egg] && eggSpace(s) > 0) addEgg(s, r.egg, now);
+    return ok({ rw: r });
+  }
+  /** Gold that piled up while away (for the welcome-back note). */
+  function idleGold(s, now = Date.now()) { let t = 0; for (const k in s.buildings) { const b = s.buildings[k]; if (b.type !== 'habitat') continue; const dt = Math.max(0, now - b.last) / 60000; t += Math.min(DR.HABITAT.store(b.lv), b.gold + rate(s, b) * dt) - b.gold; } return Math.floor(t); }
+
+  return { defaults, validate, load, save, tick, rate, collect, collectAll, habitatCount, farmCount, plotOpen, buildCost, build, upgradeHabitat, upgradeHatchery, expand, plant, harvest, feed, homesFor, moveDragon, sellDragon, hatchery, eggSpace, buyEgg, breedTable, rollChild, startBreed, collectBreed, hatch, sellEgg, speedUp, arenaWin, addXp, questProgress, claimQuest, claimDaily, dailyReady, redeem, idleGold, addDragon, dayKey };
+})();
+
+</script>
+<script>
+/* =====================================================================
+ * Eldoria: Dragon Roost — battle.js
+ * Turn-based arena battles, up to 3 dragons a side. Pure logic with a
+ * seedable RNG; the UI animates the events each turn produces.
+ * ===================================================================== */
+DR.Battle = (function () {
+  const MOVE = {
+    fire: ['Flame Breath', 'Inferno Burst'], water: ['Tidal Splash', 'Hydro Cannon'], earth: ['Rock Toss', 'Earthquake'], nature: ['Leaf Storm', 'Thorn Prison'],
+    storm: ['Spark Bite', 'Thunderstrike'], ice: ['Frost Shard', 'Blizzard Breath'], metal: ['Steel Claw', 'Blade Cyclone'], shadow: ['Shade Orb', 'Nightmare'],
+    light: ['Radiant Beam', 'Solar Judgement'], arcane: ['Rune Bolt', 'Astral Rift'], legend: ['', 'Legendary Wrath'],
+  };
+  function moves(d) {
+    if (d.kind === 'pure') return [{ el: d.els[0], name: MOVE[d.els[0]][0], pow: 1, cd: 0 }, { el: d.els[0], name: MOVE[d.els[0]][1], pow: 1.75, cd: 3 }];
+    const m = [{ el: d.els[0], name: MOVE[d.els[0]][0], pow: 1, cd: 0 }, { el: d.els[1], name: MOVE[d.els[1]][1], pow: 1.5, cd: 2 }];
+    if (d.kind === 'legend') m.push({ el: 'legend', name: MOVE.legend[1], pow: 2.3, cd: 4 });
+    return m;
+  }
+  /** Damage multiplier of an attack element against a defender. */
+  function mult(el, d) {
+    if (el === 'legend') return 1.3;
+    let m = 1;
+    if (d.els.some(x => DR.STRONG[el].includes(x))) m *= 1.5;
+    if (d.els.some(x => DR.STRONG[x].includes(el))) m *= 0.7;
+    return m;
+  }
+  function unit(id, lv) { const d = DR.D[id], st = DR.stats(d, lv); return { id, d, lv, hp: st.hp, max: st.hp, atk: st.atk, cds: [0, 0, 0], moves: moves(d) }; }
+  function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+  class Battle {
+    constructor(teamA, teamB, seed) {
+      this.A = teamA.map(x => unit(x.id, x.lv)); this.B = teamB.map(x => unit(x.id, x.lv));
+      this.ia = 0; this.ib = 0; this.rand = mulberry(seed != null ? seed : Date.now() & 0xffffffff); this.over = null; this.turn = 0;
+    }
+    get a() { return this.A[this.ia]; } get b() { return this.B[this.ib]; }
+    canUse(u, i) { return u.moves[i] && u.cds[i] <= 0; }
+    hit(att, def, i) {
+      const mv = att.moves[i], m = mult(mv.el, def.d), crit = this.rand() < 0.08;
+      const dmg = Math.max(1, Math.round(att.atk * mv.pow * m * (0.9 + this.rand() * 0.2) * (crit ? 1.5 : 1)));
+      def.hp = Math.max(0, def.hp - dmg); att.cds[i] = mv.cd;
+      return { move: mv, dmg, mult: m, crit, fainted: def.hp <= 0 };
+    }
+    /** AI: the move with the best expected damage. */
+    pick(att, def) { let best = 0, bv = -1; att.moves.forEach((mv, i) => { if (att.cds[i] > 0) return; const v = mv.pow * mult(mv.el, def.d); if (v > bv) { bv = v; best = i; } }); return best; }
+    /** Plays one round: the player's move, then the enemy's. Returns events in order. */
+    round(i) {
+      if (this.over) return [];
+      if (!this.canUse(this.a, i)) i = 0;
+      const ev = []; this.turn++;
+      const step = (side) => {
+        const att = side === 'A' ? this.a : this.b, def = side === 'A' ? this.b : this.a;
+        const k = side === 'A' ? i : this.pick(att, def);
+        const r = this.hit(att, def, k); ev.push(Object.assign({ side, att: att.id, def: def.id }, r));
+        att.cds = att.cds.map((c, j) => j === k ? c : Math.max(0, c - 1));
+        if (r.fainted) {
+          if (side === 'A') { this.ib++; if (this.ib >= this.B.length) { this.over = 'win'; ev.push({ side: 'end', result: 'win' }); return false; } ev.push({ side: 'swap', team: 'B', id: this.b.id }); }
+          else { this.ia++; if (this.ia >= this.A.length) { this.over = 'lose'; ev.push({ side: 'end', result: 'lose' }); return false; } ev.push({ side: 'swap', team: 'A', id: this.a.id }); }
+          return false;
+        }
+        return true;
+      };
+      if (step('A')) step('B');
+      return ev;
+    }
+    /** Auto-play to the end (tests and quick resolve). */
+    auto(maxTurns = 200) { while (!this.over && this.turn < maxTurns) this.round(this.pick(this.a, this.b)); return this.over || 'lose'; }
+  }
+  return { Battle, moves, mult, MOVE };
+})();
+
+</script>
+<script>
+/* =====================================================================
+ * Eldoria: Dragon Roost — audio.js
+ * Synthesised sound effects and a light, happy music loop. No files.
+ * ===================================================================== */
+DR.Audio = (function () {
+  let ctx = null, sfx = null, mus = null, musicOn = false, timer = null, next = 0, step = 0;
+  const last = {};
+  function ensure() { if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return true; } try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return false; } const m = ctx.createGain(); m.gain.value = 0.7; m.connect(ctx.destination); sfx = ctx.createGain(); sfx.gain.value = 0.8; sfx.connect(m); mus = ctx.createGain(); mus.gain.value = 0.25; mus.connect(m); return true; }
+  let nb = null; const noise = () => { if (nb) return nb; nb = ctx.createBuffer(1, ctx.sampleRate * 0.5, ctx.sampleRate); const d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return nb; };
+  function tone(f, dur, o = {}) { const t = o.at || ctx.currentTime, osc = ctx.createOscillator(), g = ctx.createGain(); osc.type = o.type || 'sine'; osc.frequency.setValueAtTime(f, t); if (o.to) osc.frequency.exponentialRampToValueAtTime(Math.max(20, o.to), t + dur); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(o.vol || 0.15, t + (o.att || 0.01)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); osc.connect(g); g.connect(o.bus || sfx); osc.start(t); osc.stop(t + dur + 0.05); }
+  function hiss(dur, o = {}) { const t = o.at || ctx.currentTime, s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(); s.buffer = noise(); f.type = o.ft || 'bandpass'; f.frequency.setValueAtTime(o.f || 1500, t); if (o.fto) f.frequency.exponentialRampToValueAtTime(o.fto, t + dur); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(o.vol || 0.15, t + (o.att || 0.01)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); s.connect(f); f.connect(g); g.connect(o.bus || sfx); s.start(t); s.stop(t + dur + 0.05); }
+  const now = () => ctx.currentTime;
+  const S = {
+    tap: () => tone(700, 0.06, { type: 'triangle', vol: 0.07 }),
+    coin: () => { tone(1320, 0.08, { type: 'square', vol: 0.04 }); tone(1760, 0.12, { type: 'square', vol: 0.04, at: now() + 0.06 }); },
+    feed: () => { for (let i = 0; i < 3; i++) hiss(0.06, { f: 900, vol: 0.12, at: now() + i * 0.09 }); },
+    level: () => [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.2, { type: 'triangle', vol: 0.09, at: now() + i * 0.07 })),
+    build: () => { for (let i = 0; i < 3; i++) tone(180, 0.1, { type: 'square', vol: 0.06, at: now() + i * 0.12, to: 120 }); },
+    harvest: () => [660, 880].forEach((f, i) => tone(f, 0.12, { type: 'triangle', vol: 0.08, at: now() + i * 0.08 })),
+    hatch: () => { hiss(0.12, { f: 2500, vol: 0.2 }); hiss(0.12, { f: 2000, vol: 0.2, at: now() + 0.18 }); [784, 988, 1175, 1568].forEach((f, i) => tone(f, 0.3, { type: 'sine', vol: 0.08, at: now() + 0.35 + i * 0.08 })); },
+    breed: () => [523, 784, 659, 1046].forEach((f, i) => tone(f, 0.4, { type: 'sine', vol: 0.07, at: now() + i * 0.12 })),
+    error: () => tone(200, 0.15, { type: 'square', vol: 0.05 }),
+    roar: () => { tone(160, 0.5, { type: 'sawtooth', to: 70, vol: 0.12 }); hiss(0.5, { f: 400, ft: 'lowpass', vol: 0.2 }); },
+    hit: () => { hiss(0.12, { f: 700, vol: 0.2 }); tone(120, 0.12, { type: 'square', to: 60, vol: 0.08 }); },
+    win: () => [523, 659, 784, 1046, 1318].forEach((f, i) => tone(f, 0.3, { type: 'triangle', vol: 0.09, at: now() + i * 0.1 })),
+    lose: () => [392, 330, 262].forEach((f, i) => tone(f, 0.35, { type: 'triangle', vol: 0.08, at: now() + i * 0.15 })),
+    atk_fire: () => hiss(0.5, { f: 300, fto: 1500, ft: 'lowpass', vol: 0.25 }),
+    atk_water: () => hiss(0.4, { f: 1200, fto: 400, vol: 0.2 }),
+    atk_earth: () => { tone(90, 0.3, { type: 'square', vol: 0.1 }); hiss(0.3, { f: 300, vol: 0.2 }); },
+    atk_nature: () => hiss(0.4, { f: 3000, fto: 1500, vol: 0.12 }),
+    atk_storm: () => { hiss(0.3, { f: 3000, fto: 300, vol: 0.3, q: 0.7 }); tone(70, 0.3, { type: 'sawtooth', vol: 0.1 }); },
+    atk_ice: () => { tone(1800, 0.3, { to: 900, vol: 0.06 }); hiss(0.3, { f: 6000, vol: 0.1 }); },
+    atk_metal: () => { tone(1200, 0.25, { type: 'triangle', vol: 0.08 }); tone(1500, 0.2, { type: 'triangle', vol: 0.06, at: now() + 0.05 }); },
+    atk_shadow: () => tone(110, 0.5, { type: 'sine', to: 55, vol: 0.18 }),
+    atk_light: () => [880, 1320, 1760].forEach((f, i) => tone(f, 0.3, { vol: 0.06, at: now() + i * 0.04 })),
+    atk_arcane: () => [660, 990, 1320].forEach((f, i) => tone(f, 0.25, { type: 'triangle', vol: 0.06, at: now() + i * 0.06 })),
+    atk_legend: () => { tone(110, 0.8, { type: 'sawtooth', vol: 0.1 }); [523, 784, 1046].forEach((f, i) => tone(f, 0.5, { vol: 0.08, at: now() + i * 0.08 })); },
+  };
+  function play(n) { if (!ctx || !S[n]) return; const t = performance.now(); if (last[n] && t - last[n] < 50) return; last[n] = t; try { S[n](); } catch (e) { /* ignore */ } }
+  const MEL = [0, 4, 7, 9, 7, 4, 2, -1, 0, 2, 4, 7, 9, 12, 9, -1, 7, 9, 7, 4, 2, 4, 0, -1, 2, 4, 2, 0, -3, 0, -1, -1];
+  function schedule() { if (!musicOn) return; while (next < ctx.currentTime + 0.4) { const i = step % 32, n = MEL[i]; if (n >= -3 && n !== -1) tone(392 * Math.pow(2, n / 12), 0.35, { type: 'triangle', vol: 0.06, at: next, bus: mus }); if (i % 4 === 0) tone(98 * Math.pow(2, [0, 5, 7, 3][Math.floor(i / 8) % 4] / 12), 0.6, { vol: 0.08, at: next, bus: mus }); next += 0.22; step++; } }
+  function startMusic() { if (!ensure() || musicOn) return; musicOn = true; next = ctx.currentTime + 0.1; timer = setInterval(schedule, 120); }
+  function stopMusic() { musicOn = false; clearInterval(timer); }
+  return { ensure, play, startMusic, stopMusic };
+})();
+
+</script>
+<script>
+/* =====================================================================
+ * Eldoria: Dragon Roost — dragonart.js
+ * A part-based dragon painter. Every element brings its own horns,
+ * wings, tail tip, colours and extras; hybrids take horns and body from
+ * their first element and wings, belly and tail from the second, so all
+ * 64 dragons look different. Dragons face right; (x, y) is the ground
+ * point under the body. Original artwork.
+ * ===================================================================== */
+DR.Art = (function () {
+  const TAU = Math.PI * 2;
+  const OUT = '#2a1626';
+  const hexRgb = h => { if (h[0] !== '#') { const m = h.match(/[\d.]+/g); return m ? m.slice(0, 3).map(Number) : [0, 0, 0]; } const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  const mix = (a, b, k) => { const A = hexRgb(a), B = hexRgb(b); return 'rgb(' + A.map((v, i) => Math.round(v * (1 - k) + B[i] * k)).join(',') + ')'; };
+  const dark = (c, k) => mix(c, '#140a14', k), light = (c, k) => mix(c, '#ffffff', k);
+  const rgbStr = h => hexRgb(h).join(',');
+  function glow(c, x, y, r, rgb, a) { if (r <= 0) return; const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, 'rgba(' + rgb + ',' + a + ')'); g.addColorStop(1, 'rgba(' + rgb + ',0)'); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); }
+  function addGlow(c, x, y, r, rgb, a) { c.save(); c.globalCompositeOperation = 'lighter'; glow(c, x, y, r, rgb, a); c.restore(); }
+  function fs(c, s, fill, w = 1) { c.fillStyle = fill; c.fill(); c.strokeStyle = OUT; c.lineWidth = s * 0.05 * w; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke(); }
+  function shade(c, x, y, r, base) { const g = c.createRadialGradient(x - r * 0.35, y - r * 0.45, r * 0.1, x, y, r * 1.1); g.addColorStop(0, light(base, 0.35)); g.addColorStop(0.55, base); g.addColorStop(1, dark(base, 0.3)); return g; }
+  function poly(c, pts) { c.beginPath(); c.moveTo(pts[0], pts[1]); for (let i = 2; i < pts.length; i += 2) c.lineTo(pts[i], pts[i + 1]); c.closePath(); }
+  function blob(c, pts) { const n = pts.length / 2; c.beginPath(); for (let i = 0; i < n; i++) { const x0 = pts[i * 2], y0 = pts[i * 2 + 1], x1 = pts[(i + 1) % n * 2], y1 = pts[(i + 1) % n * 2 + 1]; if (!i) c.moveTo((x0 + x1) / 2, (y0 + y1) / 2); else c.quadraticCurveTo(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2); } const x0 = pts[0], y0 = pts[1], x1 = pts[2], y1 = pts[3]; c.quadraticCurveTo(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2); c.closePath(); }
+
+  /** Look of a dragon: colours and part styles. */
+  function look(id) {
+    const d = DR.D[id], A = DR.EL[d.els[0]], B = DR.EL[d.els[1] || d.els[0]];
+    const pure = d.kind === 'pure', leg = d.kind === 'legend';
+    return {
+      d, A, B, pure, leg,
+      body: A.c1, belly: pure ? A.c2 : light(B.c2, 0.1), wing: pure ? light(A.c1, 0.15) : B.c1, wingBone: pure ? dark(A.c1, 0.25) : dark(B.c1, 0.3),
+      spikes: pure ? A.c2 : B.c1, horn: A.id === 'metal' ? '#dfe6f0' : A.id === 'light' ? '#ffe7a0' : A.id === 'shadow' ? '#2a1838' : light(A.c2, 0.3),
+      eye: { fire: '#ffe14a', water: '#2a7aff', earth: '#3a8a2a', nature: '#ff8a3a', storm: '#7a5aff', ice: '#2ab8ff', metal: '#ff3a3a', shadow: '#ff4aff', light: '#ffa000', arcane: '#2affd8' }[B.id],
+      pattern: pure ? null : B.c1,
+    };
+  }
+
+  /* ---------------- Parts ---------------- */
+  function wing(c, s, L, type, flap, far) {
+    c.save(); c.rotate(-0.22 + flap);
+    const mem = far ? dark(L.wing, 0.12) : L.wing, bone = far ? dark(L.wingBone, 0.1) : L.wingBone, W = s * 1.2;
+    switch (type) {
+      case 'fire': case 'shadow': {
+        const tips = [[-W * 0.3, -W * 1.05], [-W * 0.75, -W * 0.85], [-W * 1.05, -W * 0.45], [-W * 1.1, -W * 0.05]];
+        c.beginPath(); c.moveTo(0, 0); c.lineTo(tips[0][0], tips[0][1]);
+        for (let i = 1; i < tips.length; i++) { const p = tips[i - 1], q = tips[i], mx = (p[0] + q[0]) / 2 * 0.72, my = (p[1] + q[1]) / 2 * 0.72; c.quadraticCurveTo(mx, my, q[0], q[1]); }
+        c.quadraticCurveTo(-W * 0.6, W * 0.05, -W * 0.15, s * 0.15); c.closePath();
+        const g = c.createLinearGradient(0, 0, -W, -W); g.addColorStop(0, mem); g.addColorStop(1, light(mem, 0.25)); fs(c, s, g);
+        if (type === 'shadow') { c.fillStyle = 'rgba(0,0,0,0.35)'; for (const [x, y] of [[-0.6, -0.5], [-0.85, -0.25]]) { c.beginPath(); c.ellipse(x * W, y * W, s * 0.07, s * 0.05, 0.4, 0, TAU); c.fill(); } }
+        c.strokeStyle = bone; c.lineWidth = s * 0.07; c.lineCap = 'round'; for (const t of tips) { c.beginPath(); c.moveTo(0, 0); c.lineTo(t[0], t[1]); c.stroke(); }
+        if (type === 'fire' && !far) for (const t of tips) { c.save(); c.globalCompositeOperation = 'lighter'; glow(c, t[0], t[1], s * 0.18, '255,170,60', 0.7); c.restore(); }
+        break;
+      }
+      case 'water': {
+        c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(-W * 0.2, -W * 1.1, -W * 0.7, -W * 0.85); c.quadraticCurveTo(-W * 1.15, -W * 0.5, -W * 0.95, -W * 0.05); c.quadraticCurveTo(-W * 0.5, s * 0.1, 0, s * 0.12); c.closePath();
+        const g = c.createLinearGradient(0, 0, -W, -W); g.addColorStop(0, mem); g.addColorStop(1, light(mem, 0.45)); fs(c, s, g);
+        c.strokeStyle = bone; c.lineWidth = s * 0.035; for (let i = 0; i < 5; i++) { const a = -Math.PI + 0.3 + i * 0.3; c.beginPath(); c.moveTo(0, 0); c.lineTo(Math.cos(a) * W * 0.78, Math.sin(a) * W * 0.78); c.stroke(); }
+        break;
+      }
+      case 'earth': {
+        for (let i = 0; i < 3; i++) { c.save(); c.rotate(0.35 + i * 0.4); poly(c, [0, 0, -W * 0.15, -W * 0.25, -W * (0.7 - i * 0.08), -W * 0.2, -W * (0.75 - i * 0.08), 0, -W * 0.2, s * 0.1]); fs(c, s, shade(c, -W * 0.4, -W * 0.1, W * 0.5, i % 2 ? dark(mem, 0.1) : mem)); c.restore(); }
+        break;
+      }
+      case 'nature': {
+        for (let i = 0; i < 3; i++) { c.save(); c.rotate(0.45 + i * 0.4); c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(-W * 0.45, -W * 0.32, -W * (1.0 - i * 0.12), 0); c.quadraticCurveTo(-W * 0.45, W * 0.3, 0, 0); c.closePath();
+          fs(c, s, shade(c, -W * 0.5, 0, W * 0.5, i === 1 ? light(mem, 0.15) : mem)); c.strokeStyle = bone; c.lineWidth = s * 0.03; c.beginPath(); c.moveTo(0, 0); c.lineTo(-W * (0.95 - i * 0.12), 0); c.stroke(); c.restore(); }
+        break;
+      }
+      case 'storm': case 'light': {
+        const n = 6;
+        for (let i = n - 1; i >= 0; i--) { c.save(); c.rotate(0.2 + i * 0.2); c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(-W * 0.5, -s * 0.18, -W * (1.1 - i * 0.06), -s * 0.02); c.quadraticCurveTo(-W * 0.55, s * 0.18, 0, s * 0.06); c.closePath();
+          fs(c, s, i % 2 ? light(mem, type === 'light' ? 0.5 : 0.1) : mem, 0.8); c.restore(); }
+        if (type === 'storm' && !far) { c.strokeStyle = '#fff6a0'; c.lineWidth = s * 0.04; c.beginPath(); c.moveTo(-W * 0.3, -W * 0.5); c.lineTo(-W * 0.5, -W * 0.4); c.lineTo(-W * 0.45, -W * 0.6); c.lineTo(-W * 0.7, -W * 0.5); c.stroke(); }
+        break;
+      }
+      case 'ice': {
+        for (let i = 0; i < 4; i++) { c.save(); c.rotate(0.25 + i * 0.3); poly(c, [0, -s * 0.05, -W * 0.3, -s * 0.12, -W * (1.05 - i * 0.1), 0, -W * 0.3, s * 0.12, 0, s * 0.05]); const g = c.createLinearGradient(0, -s * 0.1, 0, s * 0.1); g.addColorStop(0, '#ffffff'); g.addColorStop(1, mem); fs(c, s, g, 0.8); c.restore(); }
+        break;
+      }
+      case 'metal': {
+        for (let i = 0; i < 4; i++) { c.save(); c.rotate(0.25 + i * 0.3); poly(c, [0, -s * 0.06, -W * (0.95 - i * 0.08), -s * 0.08, -W * (1.08 - i * 0.08), 0, -W * (0.95 - i * 0.08), s * 0.08, 0, s * 0.06]); const g = c.createLinearGradient(0, -s * 0.08, 0, s * 0.08); g.addColorStop(0, '#ffffff'); g.addColorStop(0.5, mem); g.addColorStop(1, dark(mem, 0.3)); fs(c, s, g, 0.8); c.restore(); }
+        c.beginPath(); c.arc(0, 0, s * 0.12, 0, TAU); fs(c, s, '#c8a040');
+        break;
+      }
+      case 'arcane': {
+        for (const [r, sc, k] of [[0, 1, 0], [0.55, 0.65, 1]]) { c.save(); c.rotate(r); c.beginPath(); c.moveTo(0, 0); c.bezierCurveTo(-W * 0.2 * sc, -W * 1.0 * sc, -W * 1.0 * sc, -W * 0.9 * sc, -W * 0.85 * sc, -W * 0.15 * sc); c.quadraticCurveTo(-W * 0.5 * sc, 0, 0, 0); c.closePath();
+          const g = c.createRadialGradient(-W * 0.45 * sc, -W * 0.45 * sc, 0, -W * 0.45 * sc, -W * 0.45 * sc, W * 0.6 * sc); g.addColorStop(0, light(mem, 0.5)); g.addColorStop(1, mem); fs(c, s, g); if (!far) { c.fillStyle = k ? L.A.c2 : '#ffffff'; c.beginPath(); c.arc(-W * 0.5 * sc, -W * 0.5 * sc, s * 0.09 * sc, 0, TAU); c.fill(); } c.restore(); }
+        break;
+      }
+    }
+    c.restore();
+  }
+  function horns(c, s, L, t) {
+    const el = L.A.id, hc = L.horn;
+    switch (el) {
+      case 'fire': for (const [dx, k] of [[-0.12, 0.85], [0.05, 1]]) { c.beginPath(); c.moveTo(dx * s, -s * 0.22); c.quadraticCurveTo(dx * s - s * 0.35 * k, -s * 0.55 * k, dx * s - s * 0.6 * k, -s * 0.4 * k); c.quadraticCurveTo(dx * s - s * 0.3 * k, -s * 0.38 * k, dx * s + s * 0.12, -s * 0.12); c.closePath(); fs(c, s, shade(c, dx * s - s * 0.3, -s * 0.4, s * 0.3, hc)); } break;
+      case 'water': c.beginPath(); c.moveTo(s * 0.05, -s * 0.25); c.quadraticCurveTo(-s * 0.2, -s * 0.6, -s * 0.55, -s * 0.35); c.quadraticCurveTo(-s * 0.35, -s * 0.25, -s * 0.2, -s * 0.05); c.closePath(); fs(c, s, light(L.B.c1, 0.2)); c.strokeStyle = dark(L.B.c1, 0.3); c.lineWidth = s * 0.025; for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(-s * 0.05 - i * 0.07 * s, -s * 0.2); c.lineTo(-s * 0.25 - i * 0.1 * s, -s * 0.45 + i * 0.05 * s); c.stroke(); }
+        c.beginPath(); c.moveTo(-s * 0.15, -s * 0.02); c.lineTo(-s * 0.48, s * 0.05); c.lineTo(-s * 0.2, s * 0.12); c.closePath(); fs(c, s, light(L.B.c1, 0.3)); break;
+      case 'earth': c.beginPath(); c.moveTo(s * 0.45, -s * 0.12); c.quadraticCurveTo(s * 0.55, -s * 0.45, s * 0.42, -s * 0.5); c.quadraticCurveTo(s * 0.4, -s * 0.28, s * 0.3, -s * 0.15); c.closePath(); fs(c, s, hc);
+        for (const dx of [-0.2, 0.0]) { poly(c, [dx * s, -s * 0.2, dx * s - s * 0.1, -s * 0.42, dx * s + s * 0.08, -s * 0.25]); fs(c, s, dark(hc, 0.1)); } break;
+      case 'nature': c.strokeStyle = '#6a4a2a'; c.lineWidth = s * 0.06; c.lineCap = 'round';
+        for (const dx of [-0.15, 0.02]) { c.beginPath(); c.moveTo(dx * s, -s * 0.2); c.lineTo(dx * s - s * 0.2, -s * 0.55); c.moveTo(dx * s - s * 0.1, -s * 0.38); c.lineTo(dx * s - s * 0.3, -s * 0.42); c.moveTo(dx * s - s * 0.16, -s * 0.48); c.lineTo(dx * s - s * 0.05, -s * 0.62); c.stroke(); }
+        for (const [x, y] of [[-0.38, -0.58], [-0.4, -0.42], [-0.1, -0.66]]) { c.beginPath(); c.ellipse(x * s, y * s, s * 0.1, s * 0.05, -0.5, 0, TAU); fs(c, s, light(L.B.c1 === L.A.c1 ? '#56c244' : L.B.c1, 0.1), 0.6); } break;
+      case 'storm': for (const dx of [-0.15, 0.03]) { poly(c, [dx * s, -s * 0.2, dx * s - s * 0.12, -s * 0.38, dx * s - s * 0.02, -s * 0.38, dx * s - s * 0.2, -s * 0.65, dx * s + s * 0.08, -s * 0.34, dx * s - s * 0.02, -s * 0.34, dx * s + s * 0.1, -s * 0.18]); fs(c, s, '#ffe14a'); } addGlow(c, -s * 0.1, -s * 0.5, s * 0.25, '255,230,90', 0.4 + Math.sin(t * 9) * 0.2); break;
+      case 'ice': for (let i = 0; i < 4; i++) { const x = -s * 0.25 + i * s * 0.11, h = s * (0.3 + (i % 2) * 0.15); poly(c, [x - s * 0.05, -s * 0.18, x, -s * 0.18 - h, x + s * 0.05, -s * 0.18]); const g = c.createLinearGradient(0, -s * 0.6, 0, -s * 0.2); g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#8ad8ff'); fs(c, s, g, 0.7); } break;
+      case 'metal': c.beginPath(); c.ellipse(-s * 0.02, -s * 0.15, s * 0.3, s * 0.16, -0.2, Math.PI, 0); fs(c, s, shade(c, 0, -s * 0.2, s * 0.3, '#b8c2d0'));
+        for (const dx of [-0.2, 0.0]) { poly(c, [dx * s, -s * 0.22, dx * s - s * 0.65, -s * 0.35, dx * s + s * 0.05, -s * 0.12]); const g = c.createLinearGradient(0, -s * 0.35, 0, -s * 0.12); g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#8a96aa'); fs(c, s, g, 0.8); } break;
+      case 'shadow': for (const [dx, k] of [[-0.15, 0.9], [0.05, 1]]) { c.beginPath(); c.moveTo(dx * s - s * 0.05, -s * 0.2); c.bezierCurveTo(dx * s - s * 0.35 * k, -s * 0.4 * k, dx * s - s * 0.1, -s * 0.75 * k, dx * s + s * 0.18 * k, -s * 0.72 * k); c.quadraticCurveTo(dx * s - s * 0.02, -s * 0.5 * k, dx * s + s * 0.1, -s * 0.18); c.closePath(); fs(c, s, shade(c, dx * s, -s * 0.45, s * 0.3, '#3a2050')); } break;
+      case 'light': for (const dx of [-0.12, 0.04]) { poly(c, [dx * s - s * 0.05, -s * 0.2, dx * s - s * 0.12, -s * 0.42, dx * s + s * 0.06, -s * 0.22]); fs(c, s, '#ffe7a0'); }
+        c.save(); c.globalCompositeOperation = 'lighter'; glow(c, -s * 0.05, -s * 0.62, s * 0.4, '255,220,120', 0.35); c.restore(); c.beginPath(); c.ellipse(-s * 0.05, -s * 0.62, s * 0.28, s * 0.08, 0, 0, TAU); c.strokeStyle = OUT; c.lineWidth = s * 0.08; c.stroke(); c.strokeStyle = '#ffd23f'; c.lineWidth = s * 0.05; c.stroke(); break;
+      case 'arcane': poly(c, [s * 0.18, -s * 0.22, s * 0.05, -s * 0.75, s * 0.3, -s * 0.2]); { const g = c.createLinearGradient(0, -s * 0.75, 0, -s * 0.2); g.addColorStop(0, '#ffffff'); g.addColorStop(1, L.A.c2); fs(c, s, g, 0.8); }
+        c.strokeStyle = 'rgba(255,255,255,0.7)'; c.lineWidth = s * 0.02; for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(s * (0.1 + i * 0.025), -s * (0.3 + i * 0.13)); c.lineTo(s * (0.24 - i * 0.02), -s * (0.33 + i * 0.13)); c.stroke(); }
+        addGlow(c, s * 0.08, -s * 0.72, s * 0.22, rgbStr(L.A.c2), 0.6); break;
+    }
+  }
+  function tailTip(c, s, L, t) {
+    const el = L.B.id;
+    switch (el) {
+      case 'fire': flame(c, 0, 0, s * 0.55, s * 0.24, t, -0.6); break;
+      case 'water': c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(-s * 0.3, -s * 0.45, -s * 0.45, -s * 0.35); c.quadraticCurveTo(-s * 0.25, -s * 0.05, -s * 0.5, s * 0.2); c.quadraticCurveTo(-s * 0.25, s * 0.15, 0, 0); fs(c, s, light(L.B.c1, 0.2)); break;
+      case 'earth': c.beginPath(); c.arc(-s * 0.12, 0, s * 0.2, 0, TAU); fs(c, s, shade(c, -s * 0.12, 0, s * 0.2, '#8a7a6a')); for (const a of [0, 1.6, 3.2, 4.7]) { poly(c, [-s * 0.12 + Math.cos(a) * s * 0.17, Math.sin(a) * s * 0.17, -s * 0.12 + Math.cos(a + 0.3) * s * 0.32, Math.sin(a + 0.3) * s * 0.32, -s * 0.12 + Math.cos(a + 0.6) * s * 0.17, Math.sin(a + 0.6) * s * 0.17]); fs(c, s, '#6a5a4a', 0.7); } break;
+      case 'nature': c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(-s * 0.2, -s * 0.3, -s * 0.55, -s * 0.2); c.quadraticCurveTo(-s * 0.3, s * 0.08, 0, 0); fs(c, s, '#6ad050'); c.strokeStyle = '#2a6a24'; c.lineWidth = s * 0.025; c.beginPath(); c.moveTo(0, 0); c.lineTo(-s * 0.48, -s * 0.18); c.stroke(); break;
+      case 'storm': poly(c, [0, 0, -s * 0.18, -s * 0.12, -s * 0.1, -s * 0.15, -s * 0.38, -s * 0.38, -s * 0.15, -s * 0.05, -s * 0.24, -s * 0.02, 0, s * 0.06]); fs(c, s, '#ffe14a'); addGlow(c, -s * 0.2, -s * 0.15, s * 0.3, '255,230,90', 0.45); break;
+      case 'ice': poly(c, [0, -s * 0.06, -s * 0.5, -s * 0.25, -s * 0.15, 0, -s * 0.45, s * 0.18, 0, s * 0.06]); { const g = c.createLinearGradient(-s * 0.5, 0, 0, 0); g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#8ad8ff'); fs(c, s, g); } break;
+      case 'metal': c.beginPath(); c.moveTo(0, -s * 0.05); c.quadraticCurveTo(-s * 0.15, -s * 0.4, -s * 0.45, -s * 0.3); c.quadraticCurveTo(-s * 0.3, 0, -s * 0.45, s * 0.25); c.quadraticCurveTo(-s * 0.15, s * 0.3, 0, s * 0.05); { const g = c.createLinearGradient(0, -s * 0.3, 0, s * 0.3); g.addColorStop(0, '#ffffff'); g.addColorStop(0.5, '#a8b2c4'); g.addColorStop(1, '#5a6478'); fs(c, s, g); } break;
+      case 'shadow': c.save(); c.globalAlpha *= 0.85; for (let i = 0; i < 3; i++) { c.beginPath(); c.arc(-s * (0.1 + i * 0.15), Math.sin(t * 3 + i) * s * 0.06 - i * s * 0.05, s * (0.16 - i * 0.03), 0, TAU); c.fillStyle = i % 2 ? '#7a3aa8' : '#3a1a5a'; c.fill(); } c.restore(); addGlow(c, -s * 0.2, 0, s * 0.3, '200,90,255', 0.35); break;
+      case 'light': star(c, -s * 0.22, 0, s * 0.26, t * 0.6, '#ffe14a'); addGlow(c, -s * 0.22, 0, s * 0.35, '255,230,120', 0.5); break;
+      case 'arcane': poly(c, [0, 0, -s * 0.2, -s * 0.18, -s * 0.42, 0, -s * 0.2, s * 0.18]); { const g = c.createLinearGradient(-s * 0.4, -s * 0.2, 0, s * 0.2); g.addColorStop(0, '#ffffff'); g.addColorStop(1, L.B.c1); fs(c, s, g); } addGlow(c, -s * 0.2, 0, s * 0.3, rgbStr(L.B.c2), 0.45); break;
+    }
+  }
+  function flame(c, x, y, h, w, t, rot = 0) {
+    c.save(); c.translate(x, y); c.rotate(rot);
+    const f = Math.sin(t * 14) * h * 0.08;
+    for (const [col, k] of [['#ff4a1a', 1], ['#ffa02a', 0.72], ['#fff1a0', 0.42]]) { c.beginPath(); c.moveTo(-w * k, 0); c.quadraticCurveTo(-w * k, -h * 0.55 * k, f, -h * k); c.quadraticCurveTo(w * k, -h * 0.55 * k, w * k, 0); c.quadraticCurveTo(0, w * 0.6 * k, -w * k, 0); c.fillStyle = col; c.fill(); }
+    c.restore();
+  }
+  function star(c, x, y, r, rot, col) { c.beginPath(); for (let i = 0; i < 10; i++) { const a = rot + i * Math.PI / 5 - Math.PI / 2, rr = i % 2 ? r * 0.45 : r; c.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } c.closePath(); c.fillStyle = col; c.fill(); c.strokeStyle = OUT; c.lineWidth = r * 0.12; c.stroke(); }
+
+  /* ---------------- Whole dragon ----------------
+   * opts: { lv, t, atk (0..1), hit (0..1), fly (bool), flip (face left), shadow (bool) } */
+  function draw(c, id, x, y, size, o = {}) {
+    const L = look(id), t = o.t || 0, lv = o.lv || 10;
+    const stage = lv < 4 ? 0 : lv < 10 ? 1 : 2;
+    const s = size * [0.72, 0.88, 1][stage] * (L.leg ? 1.12 : 1);
+    const headK = [1.3, 1.12, 1][stage];
+    const fly = !!o.fly, atk = o.atk || 0;
+    const bob = fly ? Math.sin(t * 3) * s * 0.12 - s * 0.55 : Math.sin(t * 2.2) * s * 0.025;
+    const flap = fly ? Math.sin(t * 8) * 0.55 : Math.sin(t * 2.2) * 0.12;
+    c.save(); c.translate(x, y);
+    if (o.shadow !== false) { c.fillStyle = 'rgba(0,0,0,' + (fly ? 0.14 : 0.22) + ')'; c.beginPath(); c.ellipse(0, 0, s * 0.85, s * 0.17, 0, 0, TAU); c.fill(); }
+    if (o.flip) c.scale(-1, 1);
+    c.translate(0, bob);
+    if (L.leg) { c.save(); c.globalCompositeOperation = 'lighter'; glow(c, 0, -s * 0.7, s * 1.6, rgbStr(L.A.c1), 0.28 + Math.sin(t * 2) * 0.06); c.restore(); }
+    if (L.d.r === 2 && !L.leg) addGlow(c, 0, -s * 0.6, s * 1.2, rgbStr(L.B.c2), 0.12);
+    const bodyY = -s * 0.55, lean = atk * 0.25;
+    c.rotate(lean * 0.4);
+    const wingType = L.B.id, sho = [s * 0.15, bodyY - s * 0.3];
+    // far wing
+    c.save(); c.translate(sho[0] + s * 0.1, sho[1] - s * 0.05); wing(c, s * 0.92, L, wingType, flap + 0.15, true); if (L.leg) { c.rotate(0.5); wing(c, s * 0.7, L, L.A.id, flap + 0.3, true); } c.restore();
+    // tail
+    const sway = Math.sin(t * 2.5) * 0.15;
+    const tp = [[-s * 0.55, bodyY + s * 0.1], [-s * 1.0, bodyY + s * 0.15 + sway * s], [-s * 1.25, bodyY - s * 0.25 + sway * s * 1.5], [-s * 1.35, bodyY - s * 0.55 + sway * s * 2]];
+    c.beginPath(); c.moveTo(-s * 0.3, bodyY - s * 0.2); c.bezierCurveTo(tp[1][0], tp[1][1] - s * 0.15, tp[2][0], tp[2][1], tp[3][0], tp[3][1]); c.bezierCurveTo(tp[2][0] + s * 0.12, tp[2][1] + s * 0.12, tp[1][0] + s * 0.1, tp[1][1] + s * 0.18, -s * 0.2, bodyY + s * 0.25); c.closePath();
+    fs(c, s, shade(c, -s * 0.8, bodyY, s * 0.6, L.body));
+    c.save(); c.translate(tp[3][0], tp[3][1]); c.rotate(-0.9 - sway); tailTip(c, s, L, t); c.restore();
+    // far legs
+    const legCol = dark(L.body, 0.2);
+    if (!fly) { leg(c, s, s * 0.32, bodyY + s * 0.2, legCol, false); leg(c, s, -s * 0.28, bodyY + s * 0.2, legCol, true); }
+    // body
+    c.beginPath(); c.ellipse(0, bodyY, s * 0.62, s * 0.46, -0.12, 0, TAU); fs(c, s, shade(c, 0, bodyY, s * 0.6, L.body));
+    // belly
+    c.save(); c.beginPath(); c.ellipse(0, bodyY, s * 0.62, s * 0.46, -0.12, 0, TAU); c.clip();
+    c.beginPath(); c.ellipse(s * 0.12, bodyY + s * 0.2, s * 0.42, s * 0.3, -0.25, 0, TAU); c.fillStyle = L.belly; c.fill();
+    c.strokeStyle = dark(L.belly, 0.2); c.lineWidth = s * 0.025; for (let i = -2; i <= 2; i++) { c.beginPath(); c.ellipse(s * 0.12 + i * s * 0.11, bodyY + s * 0.22, s * 0.05, s * 0.2, 0.2, Math.PI * 0.6, Math.PI * 1.4); c.stroke(); }
+    if (L.pattern) { c.fillStyle = L.pattern; for (const [px, py, r] of [[-0.35, -0.22, 0.09], [-0.15, -0.32, 0.07], [-0.45, 0.0, 0.06], [0.05, -0.36, 0.05]]) { c.beginPath(); c.ellipse(px * s, bodyY + py * s, r * s, r * 0.75 * s, 0, 0, TAU); c.fill(); } }
+    else { c.fillStyle = dark(L.body, 0.15); for (const [px, py, r] of [[-0.35, -0.2, 0.06], [-0.2, -0.3, 0.05]]) { c.beginPath(); c.arc(px * s, bodyY + py * s, r * s, 0, TAU); c.fill(); } }
+    c.restore();
+    // back spikes
+    const nS = [3, 4, 5][stage];
+    for (let i = 0; i < nS; i++) { const u = i / (nS - 1), a = Math.PI * (1.15 + u * 0.55), px = Math.cos(a) * s * 0.6, py = bodyY + Math.sin(a) * s * 0.44 - 0.12 * px, h = s * (0.14 + 0.05 * Math.sin(u * Math.PI));
+      poly(c, [px - s * 0.07, py + s * 0.02, px - s * 0.02, py - h, px + s * 0.07, py + s * 0.02]); fs(c, s, L.spikes, 0.7); }
+    // near legs
+    if (!fly) { leg(c, s, s * 0.38, bodyY + s * 0.25, L.body, false); leg(c, s, -s * 0.2, bodyY + s * 0.28, L.body, true); }
+    else { for (const lx of [0.3, -0.2]) { c.beginPath(); c.ellipse(lx * s, bodyY + s * 0.42, s * 0.11, s * 0.08, 0.5, 0, TAU); fs(c, s, L.body, 0.8); } }
+    // neck & head
+    const hx = s * 0.6 + atk * s * 0.15, hy = bodyY - s * 0.62 - atk * s * 0.05, hs = s * 0.6 * headK;
+    c.beginPath(); c.moveTo(s * 0.18, bodyY - s * 0.32); c.quadraticCurveTo(s * 0.45, bodyY - s * 0.45, hx - hs * 0.2, hy + hs * 0.15); c.lineTo(hx + hs * 0.1, hy + hs * 0.45); c.quadraticCurveTo(s * 0.6, bodyY - s * 0.1, s * 0.4, bodyY + s * 0.05); c.closePath(); fs(c, s, shade(c, s * 0.4, bodyY - s * 0.4, s * 0.4, L.body));
+    c.save(); c.translate(hx, hy); c.rotate(-atk * 0.15);
+    // jaw (opens on attack)
+    const open = atk * 0.45 + (o.yawn || 0);
+    c.save(); c.translate(hs * 0.15, hs * 0.18); c.rotate(open); c.beginPath(); c.moveTo(-hs * 0.1, -hs * 0.05); c.quadraticCurveTo(hs * 0.45, -hs * 0.02, hs * 0.75, hs * 0.02); c.quadraticCurveTo(hs * 0.6, hs * 0.22, hs * 0.05, hs * 0.2); c.closePath(); fs(c, hs, light(L.belly, 0.05)); c.restore();
+    if (open > 0.1) { c.fillStyle = '#5a0a1a'; c.beginPath(); c.moveTo(hs * 0.15, hs * 0.15); c.lineTo(hs * 0.8, hs * 0.1); c.lineTo(hs * 0.7, hs * (0.12 + open * 0.6)); c.closePath(); c.fill(); }
+    // skull + snout
+    c.beginPath(); c.ellipse(0, 0, hs * 0.5, hs * 0.42, 0, 0, TAU); fs(c, hs, shade(c, 0, 0, hs * 0.5, L.body));
+    c.beginPath(); c.ellipse(hs * 0.42, hs * 0.08, hs * 0.42, hs * 0.24, 0.05, 0, TAU); fs(c, hs, shade(c, hs * 0.4, 0, hs * 0.4, L.body));
+    c.save(); c.translate(-hs * 0.12, -hs * 0.05); horns(c, hs * 1.2, L, t); c.restore();
+    c.fillStyle = dark(L.body, 0.45); c.beginPath(); c.ellipse(hs * 0.75, hs * 0.0, hs * 0.04, hs * 0.03, 0.3, 0, TAU); c.fill();
+    c.fillStyle = 'rgba(255,120,140,0.35)'; c.beginPath(); c.ellipse(hs * 0.12, hs * 0.18, hs * 0.1, hs * 0.06, 0, 0, TAU); c.fill();
+    // fang
+    c.fillStyle = '#ffffff'; poly(c, [hs * 0.55, hs * 0.26, hs * 0.6, hs * 0.38, hs * 0.65, hs * 0.26]); c.fill();
+    // eye
+    const blink = (t % 4.3) < 0.12 ? 0.15 : 1, ex = hs * 0.08, ey = -hs * 0.08, er = hs * 0.2;
+    c.beginPath(); c.ellipse(ex, ey, er, er * 1.1 * blink, 0, 0, TAU); fs(c, hs, '#ffffff', 0.8);
+    if (blink > 0.5) {
+      c.save(); c.beginPath(); c.ellipse(ex, ey, er, er * 1.1, 0, 0, TAU); c.clip();
+      c.beginPath(); c.ellipse(ex + er * 0.25, ey + er * 0.05, er * 0.68, er * 0.8, 0, 0, TAU); c.fillStyle = L.eye; c.fill();
+      c.beginPath(); c.ellipse(ex + er * 0.32, ey + er * 0.05, er * 0.2, er * 0.55, 0, 0, TAU); c.fillStyle = '#140a14'; c.fill();
+      c.beginPath(); c.arc(ex + er * 0.05, ey - er * 0.35, er * 0.26, 0, TAU); c.fillStyle = '#ffffff'; c.fill();
+      c.beginPath(); c.arc(ex + er * 0.5, ey + er * 0.4, er * 0.1, 0, TAU); c.fill();
+      c.restore();
+    }
+    if (L.d.r >= 2 || L.A.id === 'shadow') { c.strokeStyle = OUT; c.lineWidth = hs * 0.05; c.beginPath(); c.moveTo(ex - er * 1.0, ey - er * 1.25); c.lineTo(ex + er * 0.9, ey - er * 0.95); c.stroke(); }
+    // arcane forehead gem / legend crown
+    if (L.leg) { c.fillStyle = '#ffd23f'; poly(c, [-hs * 0.35, -hs * 0.35, -hs * 0.3, -hs * 0.62, -hs * 0.15, -hs * 0.45, 0, -hs * 0.7, hs * 0.12, -hs * 0.45, hs * 0.25, -hs * 0.6, hs * 0.28, -hs * 0.33]); fs(c, hs, '#ffd23f'); c.beginPath(); c.arc(0, -hs * 0.5, hs * 0.06, 0, TAU); c.fillStyle = '#ff3a6a'; c.fill(); }
+    c.restore();
+    // near wing
+    c.save(); c.translate(sho[0], sho[1]); wing(c, s, L, wingType, flap, false); if (L.leg) { c.rotate(0.45); wing(c, s * 0.75, L, L.A.id, flap + 0.2, false); } c.restore();
+    // element extras
+    extras(c, s, L, t, bodyY, hx, hy);
+    // hit flash
+    if (o.hit > 0) { c.save(); c.globalCompositeOperation = 'lighter'; glow(c, 0, bodyY, s * 1.2, '255,255,255', 0.55 * o.hit); c.restore(); }
+    c.restore();
+    return { mouth: [x + (o.flip ? -1 : 1) * (hx + hs * 0.75), y + bob + hy + hs * 0.12], body: [x, y + bob + bodyY], s };
+  }
+  function leg(c, s, x, y, col, hind) {
+    // chunky thigh + foot with claws
+    c.beginPath(); c.ellipse(x, y + s * 0.02, s * (hind ? 0.2 : 0.15), s * (hind ? 0.22 : 0.18), hind ? -0.3 : 0.2, 0, TAU); fs(c, s, shade(c, x, y, s * 0.22, col), 0.9);
+    c.beginPath(); c.moveTo(x - s * 0.08, y + s * 0.12); c.lineTo(x - s * 0.06, y + s * 0.3); c.lineTo(x + s * 0.08, y + s * 0.3); c.lineTo(x + s * 0.09, y + s * 0.1); c.closePath(); fs(c, s, col, 0.9);
+    c.beginPath(); c.ellipse(x + s * 0.04, y + s * 0.31, s * 0.13, s * 0.06, 0, 0, TAU); fs(c, s, col, 0.9);
+    c.fillStyle = '#fff8e8'; for (let i = 0; i < 3; i++) { const cx = x - s * 0.04 + i * s * 0.07; poly(c, [cx, y + s * 0.33, cx + s * 0.05, y + s * 0.38, cx + s * 0.07, y + s * 0.32]); c.fill(); }
+  }
+  function extras(c, s, L, t, bodyY, hx, hy) {
+    const els = new Set(L.d.els);
+    if (els.has('fire')) for (let i = 0; i < 2; i++) { const p = (t * 0.8 + i * 0.5) % 1; c.globalAlpha = 1 - p; c.fillStyle = '#ffb02e'; c.beginPath(); c.arc(-s * 0.2 + i * s * 0.3, bodyY - s * 0.5 - p * s * 0.6, s * 0.04, 0, TAU); c.fill(); c.globalAlpha = 1; }
+    if (els.has('storm')) { const k = Math.floor(t * 6) % 5; if (k === 0) { c.strokeStyle = '#fff6a0'; c.lineWidth = s * 0.03; c.beginPath(); c.moveTo(-s * 0.5, bodyY - s * 0.3); c.lineTo(-s * 0.6, bodyY - s * 0.15); c.lineTo(-s * 0.52, bodyY - s * 0.12); c.lineTo(-s * 0.65, bodyY + s * 0.05); c.stroke(); } }
+    if (els.has('ice')) { c.fillStyle = 'rgba(255,255,255,0.9)'; for (let i = 0; i < 3; i++) { const a = t * 1.5 + i * 2.1; star(c, Math.cos(a) * s * 0.8, bodyY - s * 0.2 + Math.sin(a) * s * 0.3, s * 0.05, a, '#ffffff'); } }
+    if (els.has('shadow')) { c.save(); c.globalAlpha = 0.35; for (let i = 0; i < 3; i++) { const p = (t * 0.5 + i / 3) % 1; c.fillStyle = '#5a2a8a'; c.beginPath(); c.arc(-s * 0.6 + p * s * 0.2, bodyY + s * 0.3 - p * s * 0.8, s * (0.08 + p * 0.1), 0, TAU); c.fill(); } c.restore(); }
+    if (els.has('arcane')) for (let i = 0; i < 2; i++) { const a = t * 2 + i * Math.PI; const ox = Math.cos(a) * s * 0.9, oy = bodyY - s * 0.5 + Math.sin(a) * s * 0.2; addGlow(c, ox, oy, s * 0.15, rgbStr(DR.EL.arcane.c2), 0.8); c.fillStyle = '#ffffff'; c.beginPath(); c.arc(ox, oy, s * 0.04, 0, TAU); c.fill(); }
+    if (els.has('nature')) { c.fillStyle = '#ff8ac0'; for (const [px, py] of [[-0.3, -0.42], [0.05, -0.47]]) { for (let k = 0; k < 5; k++) { const a = k * TAU / 5; c.beginPath(); c.arc(px * s + Math.cos(a) * s * 0.035, bodyY + py * s + Math.sin(a) * s * 0.035, s * 0.03, 0, TAU); c.fill(); } c.fillStyle = '#ffe14a'; c.beginPath(); c.arc(px * s, bodyY + py * s, s * 0.022, 0, TAU); c.fill(); c.fillStyle = '#ff8ac0'; } }
+    if (els.has('metal')) { c.fillStyle = '#e8eef6'; for (const [px, py] of [[-0.2, -0.05], [0.0, -0.1], [-0.4, 0.05]]) { c.beginPath(); c.arc(px * s, bodyY + py * s, s * 0.03, 0, TAU); c.fill(); } }
+    if (els.has('light')) addGlow(c, 0, bodyY - s * 0.2, s * 0.9, '255,230,150', 0.15);
+    if (L.leg) for (let i = 0; i < 4; i++) { const a = t * 0.9 + i * TAU / 4; star(c, Math.cos(a) * s * 1.2, bodyY - s * 0.4 + Math.sin(a) * s * 0.45, s * 0.06, a, '#fff6c0'); }
+  }
+
+  /* ---------------- Eggs ---------------- */
+  function egg(c, id, x, y, s, t = 0, wobble = 0) {
+    const L = look(id), rot = Math.sin(t * 12) * 0.12 * wobble;
+    c.save(); c.translate(x, y); c.rotate(rot);
+    if (L.d.r >= 2) addGlow(c, 0, -s * 0.6, s * 1.1, rgbStr(L.leg ? '#ffd23f' : L.A.c2), 0.35 + Math.sin(t * 3) * 0.1);
+    c.fillStyle = 'rgba(0,0,0,0.2)'; c.beginPath(); c.ellipse(0, 0, s * 0.45, s * 0.1, 0, 0, TAU); c.fill();
+    c.beginPath(); c.moveTo(0, -s * 1.15); c.bezierCurveTo(s * 0.55, -s * 1.1, s * 0.62, -s * 0.05, 0, 0); c.bezierCurveTo(-s * 0.62, -s * 0.05, -s * 0.55, -s * 1.1, 0, -s * 1.15); c.closePath();
+    const g = c.createLinearGradient(-s * 0.5, -s, s * 0.5, 0); g.addColorStop(0, light(L.A.c1, 0.35)); g.addColorStop(0.6, L.A.c1); g.addColorStop(1, dark(L.A.c1, 0.25)); fs(c, s, g);
+    c.save(); c.clip();
+    c.fillStyle = L.pure ? L.A.c2 : L.B.c1;
+    if (L.leg) { for (let i = 0; i < 6; i++) star(c, Math.cos(i * 1.7) * s * 0.3, -s * 0.2 - i * s * 0.15, s * 0.09, i, '#fff6c0'); }
+    else { for (const [px, py, r] of [[-0.2, -0.85, 0.11], [0.22, -0.6, 0.14], [-0.25, -0.35, 0.09], [0.1, -0.2, 0.08], [0.05, -0.95, 0.06]]) { c.beginPath(); c.ellipse(px * s, py * s, r * s, r * 0.8 * s, 0.4, 0, TAU); c.fill(); } }
+    c.fillStyle = 'rgba(255,255,255,0.45)'; c.beginPath(); c.ellipse(-s * 0.2, -s * 0.8, s * 0.08, s * 0.2, -0.3, 0, TAU); c.fill();
+    c.restore(); c.restore();
+  }
+  /** Small element badge. */
+  function elementBadge(c, el, x, y, r) { const E = DR.EL[el]; c.beginPath(); c.arc(x, y, r, 0, TAU); const g = c.createRadialGradient(x - r * 0.3, y - r * 0.3, 0, x, y, r); g.addColorStop(0, light(E.c1, 0.4)); g.addColorStop(1, E.dk); c.fillStyle = g; c.fill(); c.strokeStyle = '#fff'; c.lineWidth = r * 0.18; c.stroke(); }
+  return { draw, egg, look, flame, star, glow, addGlow, mix, dark, light, rgbStr, elementBadge };
+})();
+
+</script>
+<script>
+/* =====================================================================
+ * Eldoria: Dragon Roost — island.js
+ * The floating island: sea and clouds, the cached island base, every
+ * building, dragons living in habitats, bubbles, camera and hit tests.
+ * World units: the island is about 1200 × 900.
+ * ===================================================================== */
+DR.Island = (function () {
+  const A = DR.Art, TAU = Math.PI * 2, WW = 1200, WH = 900;
+  let base = null;
+  const cam = { x: 600, y: 470, z: 0.6 };
+  const rnd = (seed => () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; })(11);
+
+  /* ---------------- Island base (cached) ---------------- */
+  function islandPath(c) {
+    c.beginPath();
+    const n = 26; for (let i = 0; i <= n; i++) { const a = i / n * TAU, wob = Math.sin(a * 3) * 22 + Math.sin(a * 7 + 1) * 10; const x = 600 + Math.cos(a) * (560 + wob), y = 460 + Math.sin(a) * (380 + wob * 0.7); i ? c.lineTo(x, y) : c.moveTo(x, y); }
+    c.closePath();
+  }
+  function tree(c, x, y, k, col) { c.fillStyle = 'rgba(0,0,0,0.18)'; c.beginPath(); c.ellipse(x, y + 2, 18 * k, 6 * k, 0, 0, TAU); c.fill(); c.fillStyle = '#6a4424'; c.fillRect(x - 3 * k, y - 18 * k, 6 * k, 20 * k); for (const [dx, dy, r] of [[0, -34, 18], [-11, -24, 13], [11, -25, 13]]) { const g = c.createRadialGradient(x + dx * k - 5 * k, y + dy * k - 6 * k, 2, x + dx * k, y + dy * k, r * k); g.addColorStop(0, A.light(col, 0.3)); g.addColorStop(1, A.dark(col, 0.15)); c.fillStyle = g; c.beginPath(); c.arc(x + dx * k, y + dy * k, r * k, 0, TAU); c.fill(); } }
+  function pine(c, x, y, k) { c.fillStyle = 'rgba(0,0,0,0.18)'; c.beginPath(); c.ellipse(x, y + 2, 14 * k, 5 * k, 0, 0, TAU); c.fill(); c.fillStyle = '#5a3a20'; c.fillRect(x - 2.5 * k, y - 10 * k, 5 * k, 12 * k); for (let i = 0; i < 3; i++) { c.fillStyle = i % 2 ? '#2f7a3a' : '#3a8a44'; c.beginPath(); c.moveTo(x - (16 - i * 4) * k, y - (8 + i * 12) * k); c.lineTo(x, y - (30 + i * 12) * k); c.lineTo(x + (16 - i * 4) * k, y - (8 + i * 12) * k); c.fill(); } }
+  function rock(c, x, y, k) { c.fillStyle = '#8a8a96'; c.beginPath(); c.ellipse(x, y, 14 * k, 9 * k, 0, Math.PI, 0); c.lineTo(x + 14 * k, y + 3 * k); c.lineTo(x - 14 * k, y + 3 * k); c.fill(); c.fillStyle = '#b4b4c0'; c.beginPath(); c.ellipse(x - 4 * k, y - 4 * k, 6 * k, 3 * k, -0.3, 0, TAU); c.fill(); }
+  function buildBase() {
+    const cv = document.createElement('canvas'); cv.width = WW * 1.5; cv.height = WH * 1.5; const c = cv.getContext('2d'); c.scale(1.5, 1.5);
+    // cliff underside
+    c.save(); c.translate(0, 70); islandPath(c); const cg = c.createLinearGradient(0, 300, 0, 900); cg.addColorStop(0, '#8a5a34'); cg.addColorStop(0.5, '#6a4026'); cg.addColorStop(1, '#3a2418'); c.fillStyle = cg; c.fill(); c.restore();
+    c.save(); c.translate(0, 35); islandPath(c); c.fillStyle = '#9a6a3e'; c.fill(); c.restore();
+    for (let i = 0; i < 40; i++) { const a = rnd() * Math.PI, x = 600 + Math.cos(a) * 520 * (0.6 + rnd() * 0.4), y = 470 + Math.sin(a) * 380 + 20 + rnd() * 50; c.fillStyle = 'rgba(40,20,10,0.25)'; c.beginPath(); c.ellipse(x, y, 10 + rnd() * 20, 3 + rnd() * 4, 0, 0, TAU); c.fill(); }
+    // waterfall
+    const wx = 860, wy = 780; const wg = c.createLinearGradient(0, wy, 0, wy + 140); wg.addColorStop(0, 'rgba(160,220,255,0.95)'); wg.addColorStop(1, 'rgba(160,220,255,0)'); c.fillStyle = wg; c.fillRect(wx, wy, 34, 140);
+    // grass top
+    islandPath(c); const gg = c.createRadialGradient(600, 380, 80, 600, 460, 640); gg.addColorStop(0, '#9be06a'); gg.addColorStop(0.7, '#6cc04a'); gg.addColorStop(1, '#4a9a38'); c.fillStyle = gg; c.fill();
+    c.lineWidth = 10; c.strokeStyle = '#e8d49a'; c.stroke(); c.lineWidth = 3; c.strokeStyle = 'rgba(60,40,20,0.35)'; c.stroke();
+    c.save(); islandPath(c); c.clip();
+    for (let i = 0; i < 260; i++) { c.fillStyle = rnd() < 0.5 ? 'rgba(255,255,255,0.12)' : 'rgba(30,80,20,0.12)'; c.beginPath(); c.ellipse(rnd() * WW, rnd() * WH, 8 + rnd() * 26, 3 + rnd() * 8, 0, 0, TAU); c.fill(); }
+    // river to the waterfall
+    c.strokeStyle = '#7ac8ff'; c.lineWidth = 24; c.lineCap = 'round'; c.beginPath(); c.moveTo(1010, 640); c.quadraticCurveTo(920, 700, 877, 790); c.stroke(); c.strokeStyle = 'rgba(255,255,255,0.5)'; c.lineWidth = 4; c.stroke();
+    // paths from the centre to every plot
+    c.strokeStyle = '#dcc48a'; c.lineCap = 'round';
+    for (const p of DR.PLOTS) { c.lineWidth = 22; c.beginPath(); c.moveTo(600, 430); c.quadraticCurveTo((600 + p.x) / 2 + (p.y - 430) * 0.1, (430 + p.y) / 2, p.x, p.y + 10); c.stroke(); }
+    c.strokeStyle = 'rgba(120,90,40,0.18)'; for (const p of DR.PLOTS) { c.lineWidth = 3; c.setLineDash([6, 10]); c.beginPath(); c.moveTo(600, 430); c.quadraticCurveTo((600 + p.x) / 2 + (p.y - 430) * 0.1, (430 + p.y) / 2, p.x, p.y + 10); c.stroke(); } c.setLineDash([]);
+    // flowers
+    for (let i = 0; i < 160; i++) { const x = rnd() * WW, y = rnd() * WH; if (DR.PLOTS.some(p => Math.hypot(p.x - x, (p.y - y) * 1.4) < 90)) continue; c.fillStyle = ['#ffffff', '#ffd23f', '#ff8ac0', '#a8d8ff'][Math.floor(rnd() * 4)]; c.beginPath(); c.arc(x, y, 2.5, 0, TAU); c.fill(); }
+    c.restore();
+    // trees, rocks
+    const deco = [];
+    for (let i = 0; i < 120; i++) { const a = rnd() * TAU, r = 0.25 + rnd() * 0.72, x = 600 + Math.cos(a) * 540 * r, y = 460 + Math.sin(a) * 360 * r; if (DR.PLOTS.some(p => Math.hypot(p.x - x, (p.y - y) * 1.5) < 95) || Math.hypot(x - 600, (y - 430) * 1.5) < 60) continue; deco.push([x, y, rnd()]); }
+    deco.sort((a, b) => a[1] - b[1]).forEach(([x, y, k]) => { if (k < 0.45) tree(c, x, y, 0.8 + k, k < 0.2 ? '#4aa83a' : '#5abb48'); else if (k < 0.8) pine(c, x, y, 0.8 + k * 0.4); else rock(c, x, y, 0.9); });
+    return cv;
+  }
+
+  /* ---------------- Sea & sky ---------------- */
+  const clouds = Array.from({ length: 9 }, (_, i) => ({ x: Math.random() * 2000 - 400, y: Math.random() * 1300 - 200, s: 0.6 + Math.random() * 0.9, v: 6 + Math.random() * 10 }));
+  function sky(c, W, H, t) {
+    const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#7cc8ff'); g.addColorStop(0.6, '#a8e0ff'); g.addColorStop(1, '#d8f4ff'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+  }
+  function cloud(c, x, y, s, a) { c.save(); c.globalAlpha = a; c.fillStyle = '#ffffff'; for (const [dx, dy, r] of [[0, 0, 40], [38, 8, 32], [-38, 10, 30], [16, -18, 30], [-14, -12, 26]]) { c.beginPath(); c.arc(x + dx * s, y + dy * s, r * s, 0, TAU); c.fill(); } c.restore(); }
+
+  /* ---------------- Buildings ---------------- */
+  function pad(c, x, y, col, rim) { c.fillStyle = 'rgba(0,0,0,0.2)'; c.beginPath(); c.ellipse(x, y + 8, 78, 34, 0, 0, TAU); c.fill(); c.fillStyle = rim; c.beginPath(); c.ellipse(x, y + 4, 76, 32, 0, 0, TAU); c.fill(); const g = c.createRadialGradient(x - 20, y - 10, 5, x, y, 76); g.addColorStop(0, A.light(col, 0.25)); g.addColorStop(1, col); c.fillStyle = g; c.beginPath(); c.ellipse(x, y, 74, 30, 0, 0, TAU); c.fill(); }
+  function outline(c, w = 2.5) { c.strokeStyle = '#2a1626'; c.lineWidth = w; c.lineJoin = 'round'; c.stroke(); }
+  function habitat(c, b, x, y, t) {
+    const E = DR.EL[b.el];
+    const base = { fire: ['#4a2a22', '#2a1610'], water: ['#5aa0d8', '#2a6098'], earth: ['#c49a62', '#8a6038'], nature: ['#6ac04a', '#3a8030'], storm: ['#6a6a8a', '#3a3a5a'], ice: ['#e8f6ff', '#9ac8e8'], metal: ['#8a94a8', '#4a5468'], shadow: ['#3a2a4a', '#1a1024'], light: ['#fff4d8', '#d8b878'], arcane: ['#7a3a8a', '#3a1a4a'] }[b.el];
+    pad(c, x, y, base[0], base[1]);
+    switch (b.el) {
+      case 'fire': {
+        c.beginPath(); c.moveTo(x - 50, y - 6); c.lineTo(x - 18, y - 70); c.lineTo(x + 6, y - 70); c.lineTo(x + 40, y - 6); c.closePath(); c.fillStyle = '#3a2420'; c.fill(); outline(c);
+        c.fillStyle = '#ff6a1a'; c.beginPath(); c.moveTo(x - 18, y - 70); c.lineTo(x - 10, y - 52); c.lineTo(x - 4, y - 62); c.lineTo(x + 6, y - 70); c.fill();
+        A.addGlow(c, x - 6, y - 74, 26, '255,120,40', 0.6 + Math.sin(t * 4) * 0.15);
+        for (let i = 0; i < 3; i++) { const p = (t * 0.35 + i / 3) % 1; c.globalAlpha = 0.5 * (1 - p); c.fillStyle = '#6a5a5a'; c.beginPath(); c.arc(x - 6 + Math.sin(p * 6) * 6, y - 78 - p * 50, 7 + p * 12, 0, TAU); c.fill(); c.globalAlpha = 1; }
+        c.beginPath(); c.ellipse(x + 30, y + 6, 26, 10, 0, 0, TAU); const lg = c.createRadialGradient(x + 30, y + 6, 2, x + 30, y + 6, 26); lg.addColorStop(0, '#fff1a0'); lg.addColorStop(0.5, '#ff8a2a'); lg.addColorStop(1, '#c2301a'); c.fillStyle = lg; c.fill(); outline(c, 2);
+        break;
+      }
+      case 'water': {
+        c.beginPath(); c.ellipse(x + 8, y + 2, 52, 20, 0, 0, TAU); const wg = c.createRadialGradient(x, y, 4, x + 8, y + 2, 52); wg.addColorStop(0, '#a8ecff'); wg.addColorStop(1, '#2a8ae8'); c.fillStyle = wg; c.fill(); outline(c, 2);
+        for (let i = 0; i < 2; i++) { const p = (t * 0.5 + i * 0.5) % 1; c.strokeStyle = 'rgba(255,255,255,' + (0.7 * (1 - p)) + ')'; c.lineWidth = 2; c.beginPath(); c.ellipse(x + 10, y + 2, 10 + p * 34, 4 + p * 12, 0, 0, TAU); c.stroke(); }
+        for (const [dx, dy, r] of [[-52, -4, 14], [-40, -16, 10], [48, -10, 12]]) { c.beginPath(); c.ellipse(x + dx, y + dy, r, r * 0.75, 0, 0, TAU); c.fillStyle = '#8a96a8'; c.fill(); outline(c, 2); }
+        c.fillStyle = '#4ab06a'; for (const dx of [-30, 34]) { c.beginPath(); c.ellipse(x + dx, y + 10, 8, 3, 0, 0, TAU); c.fill(); }
+        break;
+      }
+      case 'earth': {
+        c.beginPath(); c.moveTo(x - 50, y); c.lineTo(x - 44, y - 50); c.quadraticCurveTo(x - 10, y - 86, x + 24, y - 50); c.lineTo(x + 32, y); c.lineTo(x + 12, y); c.quadraticCurveTo(x - 10, y - 46, x - 30, y); c.closePath(); c.fillStyle = '#b4824a'; c.fill(); outline(c);
+        c.fillStyle = '#8a5a30'; c.fillRect(x - 46, y - 30, 14, 3); c.fillRect(x + 14, y - 40, 12, 3);
+        for (const [dx, dy, r] of [[46, -6, 16], [56, 6, 10], [-56, 8, 9]]) { c.beginPath(); c.ellipse(x + dx, y + dy, r, r * 0.8, 0, 0, TAU); c.fillStyle = '#9a7a5a'; c.fill(); outline(c, 2); }
+        break;
+      }
+      case 'nature': {
+        c.fillStyle = '#6a4424'; c.fillRect(x - 6, y - 48, 12, 48); outline(c, 0);
+        for (const [dx, dy, r, col] of [[-20, -56, 26, '#3a9a34'], [20, -58, 24, '#46aa3c'], [0, -80, 30, '#56bc46']]) { const g = c.createRadialGradient(x + dx - 8, y + dy - 10, 3, x + dx, y + dy, r); g.addColorStop(0, '#9ae070'); g.addColorStop(1, col); c.fillStyle = g; c.beginPath(); c.arc(x + dx, y + dy, r, 0, TAU); c.fill(); outline(c, 2); }
+        c.fillStyle = '#ff8ac0'; for (const [dx, dy] of [[-24, -66], [14, -84], [24, -54], [-6, -96]]) { c.beginPath(); c.arc(x + dx, y + dy, 3.5, 0, TAU); c.fill(); }
+        for (const dx of [-50, 44]) { c.fillStyle = '#4aa83a'; c.beginPath(); c.arc(x + dx, y, 12, Math.PI, 0); c.fill(); outline(c, 2); }
+        break;
+      }
+      case 'storm': {
+        c.fillStyle = '#5a5a74'; c.beginPath(); c.moveTo(x - 14, y); c.lineTo(x - 6, y - 80); c.lineTo(x + 6, y - 80); c.lineTo(x + 14, y); c.closePath(); c.fill(); outline(c);
+        c.fillStyle = '#ffd23f'; c.beginPath(); c.arc(x, y - 84, 6, 0, TAU); c.fill(); outline(c, 2);
+        cloud(c, x, y - 108, 0.55, 1); c.save(); c.globalCompositeOperation = 'multiply'; cloud(c, x, y - 104, 0.5, 0.35); c.restore();
+        if (Math.floor(t * 3) % 4 === 0) { c.strokeStyle = '#fff6a0'; c.lineWidth = 3; c.beginPath(); c.moveTo(x - 10, y - 100); c.lineTo(x - 4, y - 92); c.lineTo(x - 10, y - 90); c.lineTo(x, y - 84); c.stroke(); A.addGlow(c, x, y - 90, 30, '255,240,150', 0.5); }
+        break;
+      }
+      case 'ice': {
+        for (const [dx, h, w] of [[-30, 60, 16], [-6, 84, 20], [22, 54, 15], [44, 34, 11]]) { c.beginPath(); c.moveTo(x + dx - w, y); c.lineTo(x + dx, y - h); c.lineTo(x + dx + w, y); c.closePath(); const g = c.createLinearGradient(x + dx - w, 0, x + dx + w, 0); g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#8ad0f8'); c.fillStyle = g; c.fill(); outline(c, 2); }
+        c.fillStyle = '#ffffff'; for (let i = 0; i < 4; i++) { const a = t + i * 1.6; A.star(c, x + Math.cos(a) * 50, y - 40 + Math.sin(a) * 18, 3, a, '#ffffff'); }
+        break;
+      }
+      case 'metal': {
+        c.fillStyle = '#4a4a58'; c.fillRect(x + 18, y - 76, 16, 70); outline(c);
+        for (let i = 0; i < 2; i++) { const p = (t * 0.4 + i / 2) % 1; c.globalAlpha = 0.5 * (1 - p); c.fillStyle = '#8a8a96'; c.beginPath(); c.arc(x + 26, y - 82 - p * 40, 6 + p * 10, 0, TAU); c.fill(); c.globalAlpha = 1; }
+        c.save(); c.translate(x - 20, y - 34); c.rotate(t * 0.8); c.beginPath(); for (let i = 0; i < 16; i++) { const a = i * TAU / 16, r = i % 2 ? 22 : 28; c.lineTo(Math.cos(a) * r, Math.sin(a) * r); } c.closePath(); c.fillStyle = '#b8c2d0'; c.fill(); outline(c, 2); c.beginPath(); c.arc(0, 0, 8, 0, TAU); c.fillStyle = '#5a6478'; c.fill(); c.restore();
+        c.fillStyle = '#3a3a44'; c.beginPath(); c.moveTo(x - 4, y); c.lineTo(x + 2, y - 14); c.lineTo(x + 30, y - 14); c.lineTo(x + 36, y); c.fill(); outline(c, 2);
+        break;
+      }
+      case 'shadow': {
+        c.beginPath(); c.moveTo(x - 30, y); c.lineTo(x - 30, y - 50); c.quadraticCurveTo(x, y - 80, x + 30, y - 50); c.lineTo(x + 30, y); c.lineTo(x + 14, y); c.lineTo(x + 14, y - 40); c.quadraticCurveTo(x, y - 54, x - 14, y - 40); c.lineTo(x - 14, y); c.closePath(); c.fillStyle = '#2a1e3a'; c.fill(); outline(c);
+        A.addGlow(c, x, y - 22, 26, '200,90,255', 0.5 + Math.sin(t * 2) * 0.15);
+        for (const [dx, h] of [[-48, 34], [44, 40], [52, 22]]) { c.beginPath(); c.moveTo(x + dx - 8, y + 2); c.lineTo(x + dx, y - h); c.lineTo(x + dx + 8, y + 2); c.closePath(); c.fillStyle = '#9a4ae0'; c.fill(); outline(c, 2); }
+        break;
+      }
+      case 'light': {
+        for (const dx of [-36, -12, 12, 36]) { c.fillStyle = '#fffaf0'; c.fillRect(x + dx - 6, y - 56, 12, 56); c.strokeStyle = '#2a1626'; c.lineWidth = 2; c.strokeRect(x + dx - 6, y - 56, 12, 56); }
+        c.beginPath(); c.moveTo(x - 48, y - 56); c.lineTo(x, y - 82); c.lineTo(x + 48, y - 56); c.closePath(); c.fillStyle = '#ffe7a0'; c.fill(); outline(c);
+        A.addGlow(c, x, y - 96, 26, '255,220,120', 0.6); c.beginPath(); c.arc(x, y - 96, 8, 0, TAU); c.fillStyle = '#fff4b0'; c.fill(); outline(c, 2);
+        break;
+      }
+      case 'arcane': {
+        c.strokeStyle = 'rgba(90,232,255,0.8)'; c.lineWidth = 2; c.beginPath(); c.ellipse(x, y, 52, 20, 0, 0, TAU); c.stroke(); c.beginPath(); c.ellipse(x, y, 38, 14, 0, 0, TAU); c.stroke();
+        for (let i = 0; i < 6; i++) { const a = t * 0.6 + i * TAU / 6; c.fillStyle = '#5ae8ff'; c.fillRect(x + Math.cos(a) * 45 - 2, y + Math.sin(a) * 17 - 2, 4, 4); }
+        const fy = y - 70 + Math.sin(t * 2) * 6; A.addGlow(c, x, fy, 40, '224,74,184', 0.5);
+        c.beginPath(); c.moveTo(x, fy - 34); c.lineTo(x + 16, fy); c.lineTo(x, fy + 26); c.lineTo(x - 16, fy); c.closePath(); const g = c.createLinearGradient(x - 16, fy - 30, x + 16, fy + 26); g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#e04ab8'); c.fillStyle = g; c.fill(); outline(c, 2);
+        break;
+      }
+    }
+  }
+  function farm(c, b, x, y, t, now) {
+    pad(c, x, y, '#a07040', '#6a4426');
+    c.save(); c.beginPath(); c.ellipse(x, y, 66, 26, 0, 0, TAU); c.clip();
+    for (let r = -3; r <= 3; r++) { c.fillStyle = r % 2 ? '#7a5030' : '#8a5a36'; c.fillRect(x - 80, y + r * 8 - 4, 160, 8); }
+    const crop = b.crop && DR.CROPS.find(c => c.id === b.crop.id), prog = crop ? Math.min(1, 1 - (b.crop.end - now) / (crop.time * 1000)) : 0;
+    if (crop) for (let r = -2; r <= 2; r++) for (let i = -4; i <= 4; i++) { const px = x + i * 14 + (r % 2) * 7, py = y + r * 9; const h = 4 + prog * 12; c.fillStyle = '#3a9a34'; c.beginPath(); c.ellipse(px - 3, py - h * 0.6, 3, h * 0.5, -0.5, 0, TAU); c.ellipse(px + 3, py - h * 0.6, 3, h * 0.5, 0.5, 0, TAU); c.fill(); if (prog >= 1) { c.fillStyle = { berry: '#5a6aff', sun: '#ff9a2a', star: '#e8f08a', moon: '#ff7a1a' }[crop.id]; c.beginPath(); c.arc(px, py - h - 2, 3.5, 0, TAU); c.fill(); } }
+    c.restore();
+    c.strokeStyle = '#8a6038'; c.lineWidth = 3; c.beginPath(); c.ellipse(x, y, 70, 29, 0, Math.PI * 0.05, Math.PI * 0.95); c.stroke();
+    for (let i = 0; i < 7; i++) { const a = Math.PI * (0.1 + i * 0.13), px = x + Math.cos(a) * 70, py = y + Math.sin(a) * 29; c.fillStyle = '#c89a62'; c.fillRect(px - 2, py - 12, 4, 13); }
+    // scarecrow
+    c.fillStyle = '#6a4424'; c.fillRect(x + 54, y - 46, 3, 40); c.fillRect(x + 44, y - 36, 24, 3); c.fillStyle = '#e8c870'; c.beginPath(); c.arc(x + 55, y - 50, 7, 0, TAU); c.fill(); c.fillStyle = '#c2302a'; c.beginPath(); c.moveTo(x + 46, y - 54); c.lineTo(x + 64, y - 54); c.lineTo(x + 55, y - 64); c.fill();
+  }
+  function hatchery(c, b, s, x, y, t, now) {
+    pad(c, x, y, '#c8a878', '#8a6a48');
+    c.beginPath(); c.ellipse(x, y - 6, 60, 24, 0, 0, TAU); c.fillStyle = '#d8b46a'; c.fill(); outline(c, 2);
+    c.strokeStyle = '#a8803a'; c.lineWidth = 2; for (let i = 0; i < 14; i++) { const a = i / 14 * TAU; c.beginPath(); c.moveTo(x + Math.cos(a) * 46, y - 6 + Math.sin(a) * 18); c.lineTo(x + Math.cos(a + 0.4) * 60, y - 6 + Math.sin(a + 0.4) * 24); c.stroke(); }
+    c.beginPath(); c.ellipse(x, y - 8, 44, 16, 0, 0, TAU); c.fillStyle = '#8a6a3a'; c.fill();
+    // warm lamp arch
+    c.strokeStyle = '#6a4a2a'; c.lineWidth = 5; c.beginPath(); c.moveTo(x - 58, y - 2); c.quadraticCurveTo(x, y - 110, x + 58, y - 2); c.stroke();
+    A.addGlow(c, x, y - 64, 30, '255,200,100', 0.55 + Math.sin(t * 3) * 0.1); c.fillStyle = '#ffd88a'; c.beginPath(); c.arc(x, y - 66, 7, 0, TAU); c.fill(); outline(c, 2);
+    s.eggs.forEach((e, i) => { const n = s.eggs.length, ex = x + (i - (n - 1) / 2) * 26; A.egg(c, e.id, ex, y - 4, 22, t + i, now >= e.end ? 1 : 0.15); });
+  }
+  function breeder(c, s, x, y, t, now) {
+    pad(c, x, y, '#b48ab8', '#7a5a80');
+    for (const [dx, h, w] of [[-26, 88, 34], [26, 76, 30]]) { c.beginPath(); c.moveTo(x + dx - w, y); c.lineTo(x + dx - 6, y - h); c.lineTo(x + dx + 6, y - h + 6); c.lineTo(x + dx + w, y); c.closePath(); const g = c.createLinearGradient(x + dx - w, 0, x + dx + w, 0); g.addColorStop(0, '#a87aa8'); g.addColorStop(1, '#6a4a74'); c.fillStyle = g; c.fill(); outline(c); c.fillStyle = '#ffffff'; c.beginPath(); c.moveTo(x + dx - 12, y - h + 14); c.lineTo(x + dx - 6, y - h); c.lineTo(x + dx + 6, y - h + 6); c.lineTo(x + dx + 4, y - h + 16); c.fill(); }
+    const hy = y - 100 + Math.sin(t * 2) * 5, busy = !!s.breeding;
+    A.addGlow(c, x, hy, 30, '255,90,150', busy ? 0.7 : 0.35);
+    c.save(); c.translate(x, hy); c.scale(busy ? 1 + Math.sin(t * 6) * 0.08 : 1, busy ? 1 + Math.sin(t * 6) * 0.08 : 1); c.beginPath(); c.moveTo(0, 10); c.bezierCurveTo(-18, -2, -12, -18, 0, -8); c.bezierCurveTo(12, -18, 18, -2, 0, 10); c.fillStyle = '#ff4a8a'; c.fill(); outline(c, 2); c.restore();
+    if (busy) for (let i = 0; i < 3; i++) { const p = (t * 0.5 + i / 3) % 1; c.globalAlpha = 1 - p; c.fillStyle = '#ff8ac0'; c.font = '14px serif'; c.fillText('♥', x - 30 + i * 26, y - 40 - p * 50); c.globalAlpha = 1; }
+  }
+  function arena(c, x, y, t) {
+    pad(c, x, y, '#c8b898', '#8a7a5a');
+    c.beginPath(); c.ellipse(x, y - 14, 64, 26, 0, 0, TAU); c.fillStyle = '#e8dcc0'; c.fill(); outline(c);
+    c.beginPath(); c.ellipse(x, y - 14, 46, 17, 0, 0, TAU); c.fillStyle = '#d8b878'; c.fill(); outline(c, 2);
+    c.fillStyle = '#c8b898'; c.beginPath(); c.ellipse(x, y - 30, 64, 26, 0, Math.PI, 0); c.lineTo(x + 64, y - 14); c.ellipse(x, y - 14, 64, 26, 0, 0, Math.PI, true); c.fill(); outline(c, 2);
+    c.fillStyle = '#8a7a5a'; for (let i = 0; i < 9; i++) { const a = Math.PI + i * Math.PI / 8; c.fillRect(x + Math.cos(a) * 58 - 3, y - 30 + Math.sin(a) * 22, 6, 12); }
+    for (const dx of [-60, 60]) { c.fillStyle = '#6a4a2a'; c.fillRect(x + dx - 1, y - 76, 3, 50); c.beginPath(); c.moveTo(x + dx + 2, y - 76); for (let k = 0; k <= 5; k++) c.lineTo(x + dx + 2 + k * 4, y - 76 + Math.sin(t * 6 + k + dx) * 2); for (let k = 5; k >= 0; k--) c.lineTo(x + dx + 2 + k * 4, y - 64 + Math.sin(t * 6 + k + dx) * 2); c.fillStyle = dx < 0 ? '#c2302a' : '#2a6ad0'; c.fill(); }
+    c.font = '900 20px system-ui'; c.textAlign = 'center'; c.fillStyle = '#ffd23f'; c.strokeStyle = '#2a1626'; c.lineWidth = 4; c.strokeText('⚔', x, y - 6); c.fillText('⚔', x, y - 6);
+  }
+  function emptyPlot(c, x, y, t) {
+    c.fillStyle = 'rgba(255,255,255,0.18)'; c.beginPath(); c.ellipse(x, y, 66, 27, 0, 0, TAU); c.fill();
+    c.setLineDash([8, 6]); c.strokeStyle = 'rgba(255,255,255,0.75)'; c.lineWidth = 3; c.stroke(); c.setLineDash([]);
+    c.fillStyle = 'rgba(255,255,255,0.9)'; c.font = '900 26px system-ui'; c.textAlign = 'center'; c.fillText('+', x, y + 9 + Math.sin(t * 3) * 2);
+  }
+  function lockedPlot(c, x, y, t, i) {
+    for (let k = 0; k < 4; k++) cloud(c, x + Math.sin(t * 0.3 + k + i) * 8 + (k - 1.5) * 26, y - 14 + (k % 2) * 10, 0.55, 0.92);
+    c.font = '20px system-ui'; c.textAlign = 'center'; c.fillText('🔒', x, y - 4);
+  }
+  /** Floating icon bubble above a building. */
+  function bubble(c, x, y, t, icon, frac, col) {
+    const by = y + Math.sin(t * 3 + x) * 3;
+    c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(x, y + 26, 10, 3, 0, 0, TAU); c.fill();
+    c.beginPath(); c.arc(x, by, 19, 0, TAU); c.fillStyle = '#ffffff'; c.fill(); c.strokeStyle = '#2a1626'; c.lineWidth = 2.5; c.stroke();
+    if (frac != null) { c.beginPath(); c.arc(x, by, 22, -Math.PI / 2, -Math.PI / 2 + TAU * frac); c.strokeStyle = col || '#ffc82e'; c.lineWidth = 4; c.stroke(); }
+    c.font = '20px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(icon, x, by + 1); c.textBaseline = 'alphabetic';
+  }
+
+  /* ---------------- Frame ---------------- */
+  const flyers = [];
+  function draw(cv, s, t, now) {
+    const c = cv.getContext('2d'), W = cv.width, H = cv.height, dpr = W / cv.clientWidth || 1;
+    c.setTransform(1, 0, 0, 1, 0, 0); sky(c, W, H, t);
+    // clouds behind
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    for (const cl of clouds) { cl.x += cl.v * 0.016; if (cl.x > cv.clientWidth + 200) cl.x = -200; cloud(c, cl.x, (cl.y % (cv.clientHeight + 200)), cl.s, 0.55); }
+    const z = cam.z * dpr; c.setTransform(z, 0, 0, z, W / 2 - cam.x * z, H / 2 - cam.y * z);
+    if (!base) base = buildBase();
+    c.drawImage(base, 0, 0, WW, WH);
+    // waterfall shimmer
+    for (let i = 0; i < 4; i++) { const p = (t * 0.8 + i / 4) % 1; c.fillStyle = 'rgba(255,255,255,' + (0.6 * (1 - p)) + ')'; c.fillRect(862 + i * 7, 780 + p * 130, 3, 14); }
+    DR.State.tick(s, now);
+    // draw plots back to front
+    const order = DR.PLOTS.slice().sort((a, b) => a.y - b.y);
+    for (const p of order) {
+      const b = s.buildings[p.i], open = p.zone <= s.zones;
+      if (!open) { lockedPlot(c, p.x, p.y, t, p.i); continue; }
+      if (!b) { emptyPlot(c, p.x, p.y, t); continue; }
+      if (b.type === 'habitat') {
+        habitat(c, b, p.x, p.y, t);
+        b.dragons.forEach((u, k) => { const x = s.dragons[u]; if (!x) return; const n = b.dragons.length, ang = (k - (n - 1) / 2) * 0.9 + 0.2, dx = Math.sin(ang) * 46, dy = 14 + Math.cos(ang) * 6; DR.Art.draw(c, x.id, p.x + dx, p.y + dy, 30, { t: t + k * 1.3 + p.i, lv: x.lv, flip: dx > 0 && k % 2 === 1 }); });
+        const st = DR.HABITAT.store(b.lv), frac = Math.min(1, b.gold / st);
+        if (b.gold >= Math.max(5, st * 0.08)) bubble(c, p.x, p.y - 112, t, '🪙', frac, frac >= 1 ? '#ff5a3a' : '#ffc82e');
+      } else if (b.type === 'farm') {
+        farm(c, b, p.x, p.y, t, now);
+        if (!b.crop) bubble(c, p.x, p.y - 70, t, '🌱'); else if (now >= b.crop.end) bubble(c, p.x, p.y - 70, t, '🍖', 1, '#5fd17a');
+      } else if (b.type === 'hatchery') {
+        hatchery(c, b, s, p.x, p.y, t, now);
+        if (s.eggs.some(e => now >= e.end)) bubble(c, p.x, p.y - 120, t, '🐣', 1, '#5fd17a');
+      } else if (b.type === 'breed') {
+        breeder(c, s, p.x, p.y, t, now);
+        if (s.breeding && now >= s.breeding.end) bubble(c, p.x, p.y - 140, t, '🥚', 1, '#ff4a8a');
+      } else if (b.type === 'arena') arena(c, p.x, p.y, t);
+    }
+    // ambient flyers: a couple of owned dragons circling the island
+    const owned = Object.values(s.dragons);
+    if (owned.length) for (let k = 0; k < Math.min(2, owned.length); k++) {
+      const d = owned[(k * 7 + Math.floor(t / 20)) % owned.length], a = t * 0.18 + k * Math.PI, fx = 600 + Math.cos(a) * 620, fy = 380 + Math.sin(a) * 300 - 120;
+      DR.Art.draw(c, d.id, fx, fy, 34, { t: t + k, lv: d.lv, fly: true, flip: Math.sin(a) > 0, shadow: false });
+    }
+  }
+  /* ---------------- Camera & picking ---------------- */
+  function toWorld(cv, sx, sy) { const W = cv.clientWidth, H = cv.clientHeight; return [(sx - W / 2) / cam.z + cam.x, (sy - H / 2) / cam.z + cam.y]; }
+  function pick(cv, sx, sy) { const [x, y] = toWorld(cv, sx, sy); let best = null, bd = 1e9; for (const p of DR.PLOTS) { const d = Math.hypot((x - p.x) / 80, (y - (p.y - 30)) / 70); if (d < 1 && d < bd) { bd = d; best = p.i; } } return best; }
+  function clampCam(cv) { const W = cv.clientWidth, H = cv.clientHeight; const minZ = Math.min(W / 1300, H / 1000) * 0.85; cam.z = Math.max(minZ, Math.min(1.6, cam.z)); cam.x = Math.max(100, Math.min(1100, cam.x)); cam.y = Math.max(120, Math.min(820, cam.y)); }
+  function fit(cv) { const W = cv.clientWidth, H = cv.clientHeight; cam.z = Math.max(Math.min(W / 640, H / 700), 0.45); cam.x = 600; cam.y = 440; clampCam(cv); }
+  function focus(cv, plot) { const p = DR.PLOTS[plot]; cam.x = p.x; cam.y = p.y - 40; clampCam(cv); }
+  return { draw, pick, cam, clampCam, fit, focus, toWorld, habitat, farm, egg: A.egg };
+})();
+
+</script>
+<script>
+/* =====================================================================
+ * Eldoria: Dragon Roost — battleview.js
+ * Draws and animates an arena battle: the colosseum, both dragons, HP
+ * bars, breath attacks for every element, impacts and faints.
+ * ===================================================================== */
+DR.BattleView = (function () {
+  const A = DR.Art, TAU = Math.PI * 2, W = 360, H = 300;
+  let parts = [], anim = null, queue = [], shake = 0, view = null;
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const COL = { fire: ['#fff1a0', '#ff8a2a', '#e83a1a'], water: ['#ffffff', '#7ad0ff', '#2a8ae8'], earth: ['#e8c890', '#a87848', '#6a4626'], nature: ['#e0f8a0', '#6ad050', '#2a8a2a'], storm: ['#ffffff', '#fff27a', '#8a6aff'], ice: ['#ffffff', '#bfeaff', '#5ab8ff'], metal: ['#ffffff', '#c8d0dc', '#6a7488'], shadow: ['#e0b0ff', '#9a4ae0', '#3a1a5a'], light: ['#ffffff', '#fff4b0', '#ffc82e'], arcane: ['#ffffff', '#5ae8ff', '#e04ab8'], legend: ['#ffffff', '#ffd23f', '#ff4a8a'] };
+
+  /** view: { battle, a: {hp shown}, b: {...}, posA, posB } */
+  function start(battle) {
+    parts = []; queue = []; anim = null; shake = 0;
+    view = { battle, ia: 0, ib: 0, hpA: battle.a.hp, hpB: battle.b.hp, fadeA: 0, fadeB: 0, enterA: 0, enterB: 0, t: 0 };
+  }
+  /** Queue the events from one battle round. done() fires when all are shown. */
+  function play(events, done) { for (const e of events) queue.push(e); queue.push({ side: 'done', cb: done }); }
+  const busy = () => !!anim || queue.length > 0;
+  function next() {
+    const e = queue.shift(); if (!e) return;
+    if (e.side === 'done') { e.cb && e.cb(); return next(); }
+    if (e.side === 'end') { anim = { kind: 'end', t: 0, dur: 0.6, e }; return; }
+    if (e.side === 'swap') { anim = { kind: 'swap', t: 0, dur: 0.7, e }; if (e.team === 'A') { view.ia++; view.hpA = view.battle.A[view.ia].hp; view.fadeA = 0; view.enterA = 0; } else { view.ib++; view.hpB = view.battle.B[view.ib].hp; view.fadeB = 0; view.enterB = 0; } return; }
+    anim = { kind: 'attack', t: 0, dur: e.move.el === 'storm' || e.move.el === 'light' || e.move.el === 'legend' ? 1.0 : 1.15, e, hit: false };
+    DR.UI && DR.UI.sfx && DR.UI.sfx('atk_' + e.move.el);
+  }
+  function emit(o) { if (parts.length > 260) parts.shift(); o.t = 0; parts.push(o); }
+  function burst(x, y, n, el, big) { const c = COL[el] || COL.metal; for (let i = 0; i < n; i++) { const a = rnd(0, TAU), sp = rnd(40, big ? 220 : 150); emit({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: rnd(0.3, 0.7), size: rnd(2, big ? 6 : 4), color: c[Math.floor(rnd(0, 3))], g: el === 'fire' ? -80 : el === 'earth' ? 300 : 40, kind: el === 'nature' ? 'leaf' : el === 'ice' ? 'shard' : el === 'earth' ? 'rock' : 'dot', add: el !== 'earth' && el !== 'shadow' }); } }
+
+  const POS = { A: [96, 250], B: [264, 250] };
+  function draw(cv, dt) {
+    if (!view) return;
+    const c = cv.getContext('2d'), k = Math.max(cv.width / W, cv.height / H);
+    view.t += dt;
+    if (!anim) next();
+    // advance animation
+    if (anim) {
+      anim.t += dt;
+      if (anim.kind === 'attack') {
+        const e = anim.e, fromA = e.side === 'A', impactAt = 0.6;
+        if (!anim.hit && anim.t >= impactAt) {
+          anim.hit = true; const [tx, ty] = POS[fromA ? 'B' : 'A'];
+          burst(tx, ty - 45, e.crit ? 30 : 20, e.move.el, e.crit || e.mult > 1); shake = e.crit ? 8 : e.mult > 1 ? 6 : 4;
+          if (fromA) view.hpB = Math.max(0, view.hpB - e.dmg); else view.hpA = Math.max(0, view.hpA - e.dmg);
+          emit({ x: tx, y: ty - 90, vx: 0, vy: -40, life: 1.0, size: 1, kind: 'text', text: (e.crit ? 'CRIT ' : '') + '-' + e.dmg, color: e.mult > 1 ? '#ffd23f' : e.mult < 1 ? '#bfc8d8' : '#ffffff', g: 0 });
+          if (e.mult !== 1) emit({ x: tx, y: ty - 112, vx: 0, vy: -30, life: 1.1, size: 0.8, kind: 'text', text: e.mult > 1 ? 'Super effective!' : 'Not very effective', color: e.mult > 1 ? '#ffb02e' : '#a8b2c4', g: 0 });
+          DR.UI && DR.UI.sfx && DR.UI.sfx('hit');
+          if (e.fainted) { if (fromA) view.fadeB = 0.001; else view.fadeA = 0.001; }
+        }
+        if (anim.t >= anim.dur) anim = null;
+      } else if (anim.t >= anim.dur) anim = null;
+    }
+    if (view.fadeA > 0) view.fadeA = Math.min(1, view.fadeA + dt * 1.6); if (view.fadeB > 0) view.fadeB = Math.min(1, view.fadeB + dt * 1.6);
+    view.enterA = Math.min(1, view.enterA + dt * 2); view.enterB = Math.min(1, view.enterB + dt * 2);
+    for (const p of parts) { p.t += dt; p.vy += (p.g || 0) * dt; p.x += p.vx * dt; p.y += p.vy * dt; } parts = parts.filter(p => p.t < p.life);
+    shake = Math.max(0, shake - dt * 25);
+    const sx = shake > 0.3 ? rnd(-shake, shake) : 0, sy = shake > 0.3 ? rnd(-shake, shake) : 0;
+    c.setTransform(k, 0, 0, k, (cv.width - W * k) / 2 + sx * k, (cv.height - H * k) / 2 + sy * k);
+    arenaBg(c, view.t);
+    const B = view.battle, t = view.t;
+    // dragons
+    const atkA = anim && anim.kind === 'attack' && anim.e.side === 'A' ? Math.sin(Math.min(1, anim.t / 0.6) * Math.PI) : 0;
+    const atkB = anim && anim.kind === 'attack' && anim.e.side === 'B' ? Math.sin(Math.min(1, anim.t / 0.6) * Math.PI) : 0;
+    const hitA = anim && anim.kind === 'attack' && anim.hit && anim.e.side === 'B' ? Math.max(0, 1 - (anim.t - 0.6) * 3) : 0;
+    const hitB = anim && anim.kind === 'attack' && anim.hit && anim.e.side === 'A' ? Math.max(0, 1 - (anim.t - 0.6) * 3) : 0;
+    const da = B.A[view.ia], db = B.B[view.ib];
+    const mA = dragonAt(c, da, 'A', t, atkA, hitA, view.fadeA, view.enterA);
+    const mB = dragonAt(c, db, 'B', t, atkB, hitB, view.fadeB, view.enterB);
+    // projectile
+    if (anim && anim.kind === 'attack') projectile(c, anim, anim.e.side === 'A' ? mA : mB, POS[anim.e.side === 'A' ? 'B' : 'A'], t);
+    // particles
+    for (const p of parts) {
+      const a = 1 - p.t / p.life; c.globalAlpha = Math.max(0, a); c.globalCompositeOperation = p.add ? 'lighter' : 'source-over';
+      if (p.kind === 'text') { c.font = '900 ' + Math.round(18 * p.size) + 'px system-ui'; c.textAlign = 'center'; c.lineWidth = 4; c.strokeStyle = '#2a1626'; c.strokeText(p.text, p.x, p.y); c.fillStyle = p.color; c.fillText(p.text, p.x, p.y); }
+      else if (p.kind === 'leaf') { c.save(); c.translate(p.x, p.y); c.rotate(p.t * 8); c.fillStyle = p.color; c.beginPath(); c.ellipse(0, 0, p.size * 1.4, p.size * 0.6, 0, 0, TAU); c.fill(); c.restore(); }
+      else if (p.kind === 'shard') { c.save(); c.translate(p.x, p.y); c.rotate(p.t * 6); c.fillStyle = p.color; c.beginPath(); c.moveTo(0, -p.size * 1.5); c.lineTo(p.size * 0.5, 0); c.lineTo(0, p.size * 1.5); c.lineTo(-p.size * 0.5, 0); c.fill(); c.restore(); }
+      else if (p.kind === 'rock') { c.fillStyle = p.color; c.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size); }
+      else { c.fillStyle = p.color; c.beginPath(); c.arc(p.x, p.y, p.size * (0.5 + a * 0.5), 0, TAU); c.fill(); }
+    }
+    c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+    // HP plates
+    plate(c, da, view.hpA, 10, 12, 'left', B.A, view.ia);
+    plate(c, db, view.hpB, 190, 12, 'right', B.B, view.ib);
+  }
+  function dragonAt(c, u, side, t, atk, hit, fade, enter) {
+    const [x0, y] = POS[side], flip = side === 'B', x = x0 + (1 - enter) * (side === 'A' ? -160 : 160);
+    if (!u) return null;
+    c.save(); if (fade > 0) { c.globalAlpha = 1 - fade; c.translate(x, y); c.rotate((side === 'A' ? -1 : 1) * fade * 0.8); c.translate(-x, -y + fade * 10); }
+    const m = DR.Art.draw(c, u.id, x + (side === 'A' ? 1 : -1) * atk * 14, y, 46, { t: t + (side === 'A' ? 0 : 2), lv: u.lv, flip, atk, hit, fly: u.d.els.includes('storm') || u.d.kind === 'legend' });
+    c.restore(); return m;
+  }
+  function plate(c, u, hp, x, y, align, team, idx) {
+    if (!u) return; const w = 160, E = DR.EL[u.d.els[0]];
+    c.fillStyle = 'rgba(20,12,30,0.75)'; roundRect(c, x, y, w, 44, 10); c.fill(); c.strokeStyle = 'rgba(255,255,255,0.25)'; c.lineWidth = 1.5; c.stroke();
+    c.fillStyle = '#fff'; c.font = '800 12px system-ui'; c.textAlign = 'left'; c.fillText(u.d.name.replace(' Dragon', ''), x + 26, y + 16);
+    c.fillStyle = '#ffd23f'; c.font = '800 10px system-ui'; c.textAlign = 'right'; c.fillText('Lv ' + u.lv, x + w - 8, y + 16);
+    u.d.els.forEach((el, i) => A.elementBadge(c, el, x + 13 + i * 0, y + 13 + i * 0, 7 - i * 2));
+    const f = Math.max(0, hp / u.max); c.fillStyle = '#2a1626'; roundRect(c, x + 8, y + 23, w - 16, 9, 4); c.fill();
+    c.fillStyle = f > 0.5 ? '#5fd17a' : f > 0.2 ? '#ffc82e' : '#ff4a4a'; roundRect(c, x + 8, y + 23, (w - 16) * f, 9, 4); c.fill();
+    c.fillStyle = '#fff'; c.font = '700 8px system-ui'; c.textAlign = 'center'; c.fillText(Math.ceil(hp) + ' / ' + u.max, x + w / 2, y + 31);
+    for (let i = 0; i < team.length; i++) { c.beginPath(); c.arc(x + 12 + i * 12, y + 39, 3.5, 0, TAU); c.fillStyle = i < idx ? '#5a4a6a' : '#ffd23f'; c.fill(); }
+  }
+  function roundRect(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+  function arenaBg(c, t) {
+    const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#ffb878'); g.addColorStop(0.5, '#ffd8a8'); g.addColorStop(1, '#e8c890'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+    // stands
+    for (let r = 0; r < 4; r++) { c.fillStyle = r % 2 ? '#c8a878' : '#b8986a'; c.fillRect(0, 70 + r * 22, W, 22); for (let i = 0; i < 24; i++) { const x = (i * 17 + r * 9) % W, bob = Math.sin(t * 6 + i + r) * 1.5; c.fillStyle = ['#c2302a', '#2a6ad0', '#3a9a34', '#ffc82e', '#8a4ab8'][(i + r) % 5]; c.beginPath(); c.arc(x, 78 + r * 22 + bob, 4, 0, TAU); c.fill(); } }
+    for (let i = 0; i < 7; i++) { c.fillStyle = '#e8dcc0'; c.fillRect(i * 60 - 6, 54, 14, 116); c.fillStyle = '#c8b898'; c.fillRect(i * 60 - 9, 50, 20, 8); }
+    for (const [x, col] of [[30, '#c2302a'], [180, '#ffc82e'], [330, '#2a6ad0']]) { c.fillStyle = '#6a4a2a'; c.fillRect(x, 10, 3, 46); c.beginPath(); c.moveTo(x + 3, 12); for (let k = 0; k <= 6; k++) c.lineTo(x + 3 + k * 4, 12 + Math.sin(t * 5 + k + x) * 2); for (let k = 6; k >= 0; k--) c.lineTo(x + 3 + k * 4, 26 + Math.sin(t * 5 + k + x) * 2); c.fillStyle = col; c.fill(); }
+    // sand floor
+    const f = c.createLinearGradient(0, 160, 0, H); f.addColorStop(0, '#e8c888'); f.addColorStop(1, '#c89a5a'); c.fillStyle = f; c.fillRect(0, 160, W, H - 160);
+    c.strokeStyle = 'rgba(120,80,40,0.25)'; c.lineWidth = 2; c.beginPath(); c.ellipse(W / 2, 252, 150, 30, 0, 0, TAU); c.stroke();
+  }
+  function projectile(c, an, from, to, t) {
+    if (!from) return;
+    const e = an.e, el = e.move.el, p = Math.min(1, Math.max(0, (an.t - 0.15) / 0.45)); if (an.t < 0.15 || an.t > 0.62) return;
+    const [x0, y0] = from.mouth, x1 = to[0], y1 = to[1] - 45, x = x0 + (x1 - x0) * p, y = y0 + (y1 - y0) * p - Math.sin(p * Math.PI) * (el === 'earth' ? 50 : 10), cl = COL[el];
+    c.save(); c.globalCompositeOperation = 'lighter';
+    switch (el) {
+      case 'storm': case 'light': case 'legend': {
+        const w = el === 'legend' ? 14 : 8;
+        if (el === 'storm') { c.strokeStyle = cl[1]; c.lineWidth = 4; c.beginPath(); c.moveTo(x0, y0); for (let i = 1; i < 8; i++) { const u = i / 8; c.lineTo(x0 + (x1 - x0) * u + rnd(-10, 10), y0 + (y1 - y0) * u + rnd(-12, 12)); } c.lineTo(x1, y1); c.stroke(); c.strokeStyle = '#ffffff'; c.lineWidth = 1.5; c.stroke(); }
+        else { const g = c.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, el === 'legend' ? '#ff4a8a' : cl[2]); g.addColorStop(0.5, cl[1]); g.addColorStop(1, el === 'legend' ? '#5ae8ff' : '#ffffff'); c.strokeStyle = g; c.lineWidth = w; c.lineCap = 'round'; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke(); c.strokeStyle = '#ffffff'; c.lineWidth = w * 0.35; c.stroke(); }
+        A.glow(c, x1, y1, 30, '255,255,220', 0.7); break;
+      }
+      case 'fire': for (let i = 0; i < 3; i++) emit({ x: x + rnd(-4, 4), y: y + rnd(-4, 4), vx: rnd(-30, 10), vy: rnd(-30, 10), life: 0.35, size: rnd(3, 7), color: cl[Math.floor(rnd(0, 3))], g: -40, add: true }); A.glow(c, x, y, 24, '255,140,40', 0.9); c.fillStyle = '#fff1a0'; c.beginPath(); c.arc(x, y, 7, 0, TAU); c.fill(); break;
+      case 'water': for (let i = 0; i < 2; i++) emit({ x, y, vx: rnd(-20, 20), vy: rnd(-20, 20), life: 0.3, size: rnd(2, 4), color: cl[Math.floor(rnd(0, 3))], g: 100, add: true }); A.glow(c, x, y, 22, '120,200,255', 0.8); c.fillStyle = '#e8f8ff'; c.beginPath(); c.arc(x, y, 8, 0, TAU); c.fill(); break;
+      case 'earth': c.globalCompositeOperation = 'source-over'; for (let i = 0; i < 3; i++) { c.save(); c.translate(x + (i - 1) * 10, y + (i % 2) * 8); c.rotate(t * 8 + i); c.fillStyle = cl[1]; c.fillRect(-7, -6, 14, 12); c.strokeStyle = '#3a2416'; c.lineWidth = 2; c.strokeRect(-7, -6, 14, 12); c.restore(); } break;
+      case 'nature': c.globalCompositeOperation = 'source-over'; for (let i = 0; i < 5; i++) { const a = t * 10 + i * 1.25; c.save(); c.translate(x + Math.cos(a) * 12, y + Math.sin(a) * 12); c.rotate(a); c.fillStyle = i % 2 ? cl[1] : cl[2]; c.beginPath(); c.ellipse(0, 0, 7, 3, 0, 0, TAU); c.fill(); c.restore(); } break;
+      case 'ice': for (let i = 0; i < 3; i++) { c.save(); c.translate(x - i * 14, y + (i - 1) * 8); c.rotate(Math.atan2(y1 - y0, x1 - x0)); c.fillStyle = cl[1]; c.beginPath(); c.moveTo(10, 0); c.lineTo(-6, -4); c.lineTo(-6, 4); c.fill(); c.restore(); } A.glow(c, x, y, 20, '160,220,255', 0.6); break;
+      case 'metal': c.globalCompositeOperation = 'source-over'; for (let i = 0; i < 2; i++) { c.save(); c.translate(x - i * 16, y + i * 6); c.rotate(t * 20); c.beginPath(); for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2; c.lineTo(Math.cos(a) * 10, Math.sin(a) * 10); c.lineTo(Math.cos(a + 0.6) * 3, Math.sin(a + 0.6) * 3); } c.closePath(); c.fillStyle = '#dfe6f0'; c.fill(); c.strokeStyle = '#4a5468'; c.lineWidth = 1.5; c.stroke(); c.restore(); } break;
+      case 'shadow': for (let i = 0; i < 2; i++) emit({ x, y, vx: rnd(-15, 15), vy: rnd(-15, 15), life: 0.4, size: rnd(5, 9), color: 'rgba(120,40,180,0.6)', g: 0 }); c.globalCompositeOperation = 'source-over'; c.fillStyle = '#1a0a2a'; c.beginPath(); c.arc(x, y, 9, 0, TAU); c.fill(); c.globalCompositeOperation = 'lighter'; A.glow(c, x, y, 22, '200,90,255', 0.7); break;
+      case 'arcane': for (let i = 0; i < 3; i++) { const a = t * 8 + i * 2.1; A.glow(c, x + Math.cos(a) * 10, y + Math.sin(a) * 10, 12, i % 2 ? '90,232,255' : '224,74,184', 0.9); } c.fillStyle = '#ffffff'; c.beginPath(); c.arc(x, y, 4, 0, TAU); c.fill(); break;
+    }
+    c.restore();
+  }
+  return { start, play, busy, draw };
+})();
+
+</script>
+<script>
+/* =====================================================================
+ * Eldoria: Dragon Roost — ui.js
+ * Title, island interaction, panels, arena fights and the main loop.
+ * ===================================================================== */
+(function () {
+  const S = DR.State, $ = id => document.getElementById(id), fmt = DR.fmt;
+  const app = { s: S.load(), started: false, panel: null, fight: null };
+  DR.App = app;
+  const sfx = n => { if (app.s.settings.sound) DR.Audio.play(n); };
+  DR.UI = { sfx };
+  const nowMs = () => Date.now();
+  const esc = t => String(t).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+
+  /* ---------------- Helpers ---------------- */
+  function toast(m) { const d = document.createElement('div'); d.textContent = m; $('toast').appendChild(d); setTimeout(() => d.remove(), 2300); }
+  function fail(r) { toast(r.reason || 'Not possible'); sfx('error'); }
+  let lastSave = 0; function persist(force) { const n = performance.now(); if (force || n - lastSave > 3000) { S.save(app.s); lastSave = n; } }
+  function levelUps(ups) { if (!ups || !ups.length) return; const u = ups[ups.length - 1]; sfx('level'); setTimeout(() => modal('<div class="ph"><h2>Level ' + u.level + '!</h2></div><p class="sub">Your roost grows stronger. New buildings and eggs may be unlocked.</p><div class="big-reward"><span>💎 +' + ups.reduce((t, x) => t + x.gems, 0) + '</span></div><button class="btn gold" data-close style="width:100%">Great!</button>', null, true), 400); }
+  function floatText(text, x, y) { const d = document.createElement('div'); d.className = 'float'; d.textContent = text; d.style.left = (x - 30) + 'px'; d.style.top = (y - 20) + 'px'; $('app').appendChild(d); setTimeout(() => d.remove(), 1200); }
+  /** Paints dragon/egg canvases: data-dragon="id:lv[:sil]" or data-egg="id". */
+  function paint(root) {
+    root.querySelectorAll('canvas[data-dragon]').forEach(cv => {
+      const [id, lv, sil] = cv.dataset.dragon.split(':'); const w = cv.clientWidth || 96, h = cv.clientHeight || 84; cv.width = w * 2; cv.height = h * 2;
+      const c = cv.getContext('2d'); c.scale(2, 2); const d = DR.D[id];
+      c.fillStyle = ['#e8eef4', '#dcecff', '#f0e0ff', '#fff0cc'][d.r]; c.fillRect(0, 0, w, h);
+      DR.Art.draw(c, id, w / 2 + w * 0.05, h * 0.9, Math.min(w * 0.36, h * 0.42), { t: 1.2, lv: +lv || 12 });
+      if (sil) { c.globalCompositeOperation = 'source-atop'; c.fillStyle = '#3a3048'; c.fillRect(0, 0, w, h); c.globalCompositeOperation = 'destination-over'; c.fillStyle = '#e8e0d8'; c.fillRect(0, 0, w, h); }
+    });
+    root.querySelectorAll('canvas[data-egg]').forEach(cv => { const w = cv.clientWidth || 64, h = cv.clientHeight || 64; cv.width = w * 2; cv.height = h * 2; const c = cv.getContext('2d'); c.scale(2, 2); DR.Art.egg(c, cv.dataset.egg, w / 2, h * 0.92, h * 0.72, 0, 0); });
+  }
+  let sheetHandler = null;
+  function modal(html, handler, center) {
+    $('panel').innerHTML = html; $('panel').className = 'panel' + (center ? ' center' : ''); $('sheet').classList.toggle('mid', !!center); $('sheet').hidden = false; sheetHandler = handler || null; paint($('panel'));
+  }
+  function close() { $('sheet').hidden = true; app.panel = null; sheetHandler = null; }
+  $('sheet').addEventListener('click', e => { if (e.target.id === 'sheet') { sfx('tap'); return close(); } if (e.target.closest('[data-close]')) { sfx('tap'); return close(); } if (sheetHandler) sheetHandler(e); });
+  const head = title => '<div class="ph"><h2>' + title + '</h2><button class="x" data-close aria-label="Close">✕</button></div>';
+  const rarTag = d => '<span class="tag rar' + d.r + '">' + DR.RARITY[d.r].name + '</span>';
+  const elTags = d => d.els.map(e => '<span class="tag">' + DR.EL[e].icon + ' ' + DR.EL[e].name + '</span>').join(' ');
+  /** Re-renders the open panel (after a state change). */
+  function refresh() { if (!app.panel) return; const st = $('panel').scrollTop; open(app.panel.kind, app.panel.arg, true); $('panel').scrollTop = st; }
+
+  /* ---------------- Title ---------------- */
+  function titleLoop() {
+    if (app.started) return;
+    const cv = $('titleCv'), r = cv.getBoundingClientRect(); if (cv.width !== Math.round(r.width * 2)) { cv.width = Math.round(r.width * 2); cv.height = Math.round(r.height * 2); }
+    const c = cv.getContext('2d'), t = performance.now() / 1000, W = cv.width, H = cv.height;
+    const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#5ab0f0'); g.addColorStop(1, '#c8ecff'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+    const k = W / 360; c.save(); c.scale(k, k);
+    for (let i = 0; i < 5; i++) { const x = ((i * 97 + t * 8) % 460) - 50, y = 40 + i * 50; c.fillStyle = 'rgba(255,255,255,0.7)'; for (const [dx, dy, rr] of [[0, 0, 22], [20, 4, 16], [-20, 6, 15]]) { c.beginPath(); c.arc(x + dx, y + dy, rr, 0, 6.3); c.fill(); } }
+    const ids = ['fire', 'water_arcane', 'storm_light', 'nature', 'solaris', 'ice_shadow'];
+    ids.forEach((id, i) => { const a = t * 0.4 + i * 1.05, x = 180 + Math.cos(a) * 130, y = 200 + Math.sin(a * 1.3) * 60; DR.Art.draw(c, id, x, y, 34 + (i === 4 ? 8 : 0), { t: t + i, lv: 14, fly: true, flip: Math.sin(a) > 0, shadow: false }); });
+    c.restore();
+    requestAnimationFrame(titleLoop);
+  }
+  $('startBtn').addEventListener('click', () => {
+    DR.Audio.ensure(); sfx('tap'); app.started = true; $('title').hidden = true; $('main').hidden = false;
+    if (app.s.settings.music) DR.Audio.startMusic();
+    resize(); DR.Island.fit($('world'));
+    const idle = S.idleGold(app.s); if (idle > 50 && Date.now() - app.s.lastSeen > 120000) setTimeout(() => toast('Welcome back! 🪙 ' + fmt(idle) + ' is waiting in your habitats'), 600);
+    if (!app.s.stats.welcomed) { app.s.stats.welcomed = 1; setTimeout(welcome, 500); }
+    last = performance.now(); requestAnimationFrame(loop);
+  });
+  function welcome() {
+    modal(head('Welcome to your roost!') + '<canvas class="hero-art" data-dragon="fire:6"></canvas><p class="sub">This island floats above Eldoria. Raise dragons, breed new kinds, and become a legendary Dragon Master.</p>' +
+      '<div class="card" style="text-align:left"><b>How to play</b><p class="sub" style="margin:6px 0 0">• Tap a habitat to collect 🪙 gold and feed your dragons<br>• Grow 🍖 food on farms<br>• Buy eggs in the 🏪 Shop and hatch them in the Hatchery<br>• Two level ' + DR.BREED_LEVEL + '+ dragons can breed new kinds at the 💞 Breeding Peak<br>• Fight in the ⚔️ Arena for gems and legendary eggs</p></div><button class="btn gold" data-close style="width:100%">Let\'s go!</button>', null, true);
+  }
+
+  /* ---------------- World interaction ---------------- */
+  const world = $('world'); const ptrs = new Map(); let drag = null, pinch = null;
+  function resize() { const r = world.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1); world.width = Math.round(r.width * dpr); world.height = Math.round(r.height * dpr); DR.Island.clampCam(world); }
+  window.addEventListener('resize', () => { if (app.started) resize(); });
+  world.addEventListener('pointerdown', e => { world.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]); if (ptrs.size === 1) drag = { x: e.clientX, y: e.clientY, cx: DR.Island.cam.x, cy: DR.Island.cam.y, moved: 0 }; else if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), z: DR.Island.cam.z }; drag = null; } });
+  world.addEventListener('pointermove', e => { if (!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId, [e.clientX, e.clientY]); const cam = DR.Island.cam;
+    if (pinch && ptrs.size >= 2) { const [a, b] = [...ptrs.values()]; cam.z = pinch.z * Math.hypot(a[0] - b[0], a[1] - b[1]) / pinch.d; DR.Island.clampCam(world); }
+    else if (drag) { const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.moved = Math.max(drag.moved, Math.abs(dx) + Math.abs(dy)); cam.x = drag.cx - dx / cam.z; cam.y = drag.cy - dy / cam.z; DR.Island.clampCam(world); } });
+  const endPtr = e => { const wasDrag = drag && drag.moved < 8 && ptrs.size === 1; ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null; if (wasDrag && e.type === 'pointerup') { const r = world.getBoundingClientRect(); tapWorld(e.clientX - r.left, e.clientY - r.top, e.clientX, e.clientY); } if (!ptrs.size) drag = null; };
+  world.addEventListener('pointerup', endPtr); world.addEventListener('pointercancel', endPtr);
+  world.addEventListener('wheel', e => { e.preventDefault(); DR.Island.cam.z *= e.deltaY > 0 ? 0.9 : 1.1; DR.Island.clampCam(world); }, { passive: false });
+  function tapWorld(x, y, cx, cy) {
+    const i = DR.Island.pick(world, x, y); if (i == null) return;
+    const s = app.s, p = DR.PLOTS[i], b = s.buildings[i]; sfx('tap');
+    if (p.zone > s.zones) return open('shop', 'expand');
+    if (!b) return open('build', i);
+    if (b.type === 'habitat') { S.tick(s); if (b.gold >= 1) { const r = S.collect(s, i); if (r.ok) { sfx('coin'); floatText('+' + fmt(r.gold) + ' 🪙', cx, cy); persist(); return; } } return open('habitat', i); }
+    if (b.type === 'farm') { if (b.crop && nowMs() >= b.crop.end) { const r = S.harvest(s, i); if (r.ok) { sfx('harvest'); floatText('+' + fmt(r.food) + ' 🍖', cx, cy); levelUps(r.ups); persist(); return; } } return open('farm', i); }
+    if (b.type === 'hatchery') return open('hatchery', i);
+    if (b.type === 'breed') { if (s.breeding && nowMs() >= s.breeding.end) { const r = S.collectBreed(s); if (r.ok) { sfx('breed'); toast('A new egg is in the hatchery!'); persist(true); return; } return fail(r); } return open('breed'); }
+    if (b.type === 'arena') return open('arena');
+  }
+  document.getElementById('dock').addEventListener('click', e => { const b = e.target.closest('[data-open]'); if (b) { sfx('tap'); open(b.dataset.open); } });
+  $('setBtn').addEventListener('click', () => { sfx('tap'); open('settings'); });
+  $('collectAll').addEventListener('click', e => { const r = S.collectAll(app.s); if (!r.ok) return fail(r); sfx('coin'); floatText('+' + fmt(r.gold) + ' 🪙', e.clientX, e.clientY); persist(); });
+
+  /* ---------------- Panels ---------------- */
+  function open(kind, arg, keep) {
+    app.panel = { kind, arg };
+    const html = PANELS[kind](arg);
+    if (keep && !$('sheet').hidden) { $('panel').innerHTML = html; paint($('panel')); }
+    else modal(html, e => click(e));
+  }
+  const PANELS = {};
+  const dragonCard = (x, extra) => { const d = DR.D[x.id]; return '<div class="card dcard"><canvas data-dragon="' + x.id + ':' + x.lv + '"></canvas><div class="info"><b>' + d.name + '</b><small>Lv ' + x.lv + ' · ' + fmt(DR.goldRate(d, x.lv)) + ' 🪙/min</small><div>' + rarTag(d) + ' ' + elTags(d) + '</div></div>' + (extra || '') + '</div>'; };
+  PANELS.habitat = i => {
+    const s = app.s, b = s.buildings[i], E = DR.EL[b.el]; S.tick(s);
+    const st = DR.HABITAT.store(b.lv), cap = DR.HABITAT.cap(b.lv);
+    let h = head(E.icon + ' ' + E.name + ' Habitat <span class="tag">Lv ' + b.lv + '</span>');
+    h += '<div class="card"><div class="row"><div class="grow"><div class="bar"><i style="width:' + Math.min(100, b.gold / st * 100) + '%"></i><span>' + fmt(b.gold) + ' / ' + fmt(st) + '</span></div><small class="sub">' + fmt(S.rate(s, b)) + ' 🪙 per minute · ' + b.dragons.length + '/' + cap + ' dragons</small></div><button class="btn gold small" data-act="collect" data-i="' + i + '">Collect</button></div></div>';
+    for (const u of b.dragons) { const x = s.dragons[u]; if (!x) continue; const c = DR.foodCost(x.lv);
+      h += dragonCard(x, '<div class="acts" style="flex-direction:column">' + (x.lv < DR.MAX_LEVEL ? '<button class="btn green small" data-act="feed" data-u="' + u + '">Feed 🍖' + fmt(c) + '</button>' : '<span class="tag">MAX</span>') + '<button class="btn ghost small" data-act="dragon" data-u="' + u + '">More</button></div>'); }
+    if (!b.dragons.length) h += '<p class="sub">No dragons live here yet. Hatch a ' + E.name + ' egg, or move a dragon in.</p>';
+    if (b.lv < 3) h += '<button class="btn" data-act="upHab" data-i="' + i + '" style="width:100%">Upgrade: ' + DR.HABITAT.cap(b.lv + 1) + ' dragons, ' + fmt(DR.HABITAT.store(b.lv + 1)) + ' storage · 🪙' + fmt(Math.round(DR.HABITAT.upCost(b.lv) * (1 + E.i * 0.4))) + '</button>';
+    return h;
+  };
+  PANELS.dragon = u => {
+    const s = app.s, x = s.dragons[u]; if (!x) return head('Dragon') + '<p class="sub">This dragon is gone.</p>';
+    const d = DR.D[x.id], st = DR.stats(d, x.lv), homes = S.homesFor(s, x.id, x.home);
+    let h = head(d.name) + '<canvas class="hero-art" data-dragon="' + x.id + ':' + x.lv + '"></canvas><div class="row wrap" style="justify-content:center">' + rarTag(d) + elTags(d) + '<span class="tag">Lv ' + x.lv + '</span></div>';
+    h += '<div class="card" style="margin-top:10px"><div class="row"><span class="grow">❤️ HP ' + st.hp + '</span><span class="grow">⚔️ Attack ' + st.atk + '</span><span class="grow">🪙 ' + fmt(DR.goldRate(d, x.lv)) + '/min</span></div><p class="sub" style="margin:6px 0 0">Moves: ' + DR.Battle.moves(d).map(m => DR.EL[m.el] ? DR.EL[m.el].icon + ' ' + m.name : '🌟 ' + m.name).join(' · ') + '</p></div>';
+    if (homes.length) h += '<p class="sub">Move to:</p><div class="acts">' + homes.map(i => '<button class="btn ghost small" data-act="move" data-u="' + u + '" data-i="' + i + '">' + DR.EL[s.buildings[i].el].icon + ' ' + DR.EL[s.buildings[i].el].name + ' habitat</button>').join('') + '</div>';
+    h += '<div class="acts" style="margin-top:10px">' + (x.lv < DR.MAX_LEVEL ? '<button class="btn green" data-act="feed" data-u="' + u + '">Feed 🍖' + fmt(DR.foodCost(x.lv)) + '</button>' : '') + '<button class="btn red small" data-act="sell" data-u="' + u + '">Sell for 🪙' + fmt(DR.sellGold(d, x.lv)) + '</button></div>';
+    return h;
+  };
+  PANELS.farm = i => {
+    const s = app.s, b = s.buildings[i]; let h = head('🌾 Farm');
+    if (b.crop) { const c = DR.CROPS.find(x => x.id === b.crop.id), left = (b.crop.end - nowMs()) / 1000, prog = Math.min(1, 1 - left / c.time);
+      h += '<div class="card"><div class="row"><span style="font-size:34px">' + c.icon + '</span><div class="grow"><b>' + c.name + '</b><div class="bar green"><i style="width:' + prog * 100 + '%"></i><span>' + (left > 0 ? DR.time(left) : 'Ready!') + '</span></div><small class="sub">+' + fmt(c.food) + ' 🍖</small></div></div></div>';
+      h += left > 0 ? '<button class="btn purple" data-act="speed" data-k="farm" data-r="' + i + '" style="width:100%">Finish now · 💎' + DR.speedCost(left) + '</button>' : '<button class="btn green" data-act="harvest" data-i="' + i + '" style="width:100%">Harvest</button>';
+    } else { h += '<p class="sub">Choose a crop to plant.</p>'; for (const c of DR.CROPS) { const lock = s.level < c.lv; h += '<div class="card row' + (lock ? ' locked' : '') + '"><span style="font-size:30px">' + c.icon + '</span><div class="grow"><b>' + c.name + '</b><br><small class="sub">+' + fmt(c.food) + ' 🍖 in ' + DR.time(c.time) + (lock ? ' · level ' + c.lv : '') + '</small></div><button class="btn gold small' + (lock ? ' off' : '') + '" data-act="plant" data-i="' + i + '" data-c="' + c.id + '">🪙' + fmt(c.cost) + '</button></div>'; } }
+    return h;
+  };
+  PANELS.hatchery = i => {
+    const s = app.s, b = s.buildings[i], cap = DR.HATCHERY_CAP(b.lv);
+    let h = head('🐣 Hatchery <span class="tag">' + s.eggs.length + '/' + cap + '</span>');
+    if (!s.eggs.length) h += '<p class="sub">No eggs yet. Buy eggs in the Shop or breed dragons at the Breeding Peak.</p><button class="btn gold" data-go="shop" data-arg="eggs" style="width:100%">Buy eggs</button>';
+    for (const e of s.eggs) { const d = DR.D[e.id], left = (e.end - nowMs()) / 1000, known = !!s.seen[e.id];
+      h += '<div class="card row"><canvas data-egg="' + e.id + '" style="width:56px;height:62px"></canvas><div class="grow"><b>' + (known || left <= 0 ? d.name : 'Mystery ' + DR.RARITY[d.r].name + ' egg') + '</b><br>' + rarTag(d) + ' ' + (left > 0 ? '<small class="sub">Hatches in ' + DR.time(left) + '</small>' : '<small style="color:var(--green2)">Ready to hatch!</small>') + '</div>' +
+        (left > 0 ? '<button class="btn purple small" data-act="speed" data-k="egg" data-r="' + e.uid + '">💎' + DR.speedCost(left) + '</button>' : '<button class="btn green small" data-act="hatchPick" data-e="' + e.uid + '">Hatch</button>') + '</div>'; }
+    if (b.lv < 3) h += '<button class="btn ghost" data-act="upHatch" data-i="' + i + '" style="width:100%;margin-top:4px">Upgrade to ' + DR.HATCHERY_CAP(b.lv + 1) + ' egg slots · 🪙' + fmt(DR.HATCHERY_UP(b.lv)) + '</button>';
+    return h;
+  };
+  PANELS.hatchPick = eu => {
+    const s = app.s, e = s.eggs.find(x => x.uid === eu); if (!e) return head('Hatch') + '<p class="sub">Egg not found.</p>';
+    const d = DR.D[e.id], homes = S.homesFor(s, e.id);
+    let h = head('Hatch ' + d.name) + '<canvas class="hero-art" data-dragon="' + e.id + ':1"></canvas><div class="row wrap" style="justify-content:center">' + rarTag(d) + elTags(d) + '</div><p class="sub" style="margin-top:10px">Choose a habitat for your new dragon:</p>';
+    if (homes.length) h += '<div class="acts">' + homes.map(i => '<button class="btn green" data-act="hatch" data-e="' + eu + '" data-i="' + i + '">' + DR.EL[s.buildings[i].el].icon + ' ' + DR.EL[s.buildings[i].el].name + ' habitat (' + s.buildings[i].dragons.length + '/' + DR.HABITAT.cap(s.buildings[i].lv) + ')</button>').join('') + '</div>';
+    else h += '<div class="card"><b>No room!</b><p class="sub" style="margin:4px 0 0">Build or upgrade a ' + d.els.map(x => DR.EL[x].name).join(' or ') + ' habitat first.</p></div><button class="btn gold" data-go="shop" data-arg="habitats" style="width:100%">Build a habitat</button>';
+    h += '<button class="btn ghost small" data-act="sellEgg" data-e="' + eu + '" style="margin-top:10px">Sell egg for 🪙' + fmt(Math.round(DR.sellGold(d, 1) * 0.6)) + '</button>';
+    return h;
+  };
+  let breedSel = [null, null];
+  PANELS.breed = () => {
+    const s = app.s; let h = head('💞 Breeding Peak');
+    if (s.breeding) { const left = (s.breeding.end - nowMs()) / 1000, A = s.dragons[s.breeding.a], B = s.dragons[s.breeding.b], d = DR.D[s.breeding.result];
+      h += '<div class="row" style="justify-content:center;gap:4px">' + (A ? '<canvas data-dragon="' + A.id + ':' + A.lv + '" style="width:110px;height:96px;border-radius:14px"></canvas>' : '') + '<span style="font-size:28px">💞</span>' + (B ? '<canvas data-dragon="' + B.id + ':' + B.lv + '" style="width:110px;height:96px;border-radius:14px"></canvas>' : '') + '</div>';
+      h += '<div class="card"><div class="bar pink"><i style="width:' + Math.min(100, (1 - left / DR.breedTime(d.r)) * 100) + '%"></i><span>' + (left > 0 ? DR.time(left) : 'Egg ready!') + '</span></div><p class="sub" style="margin:6px 0 0">' + (left > 0 ? 'A mystery egg is on its way…' : 'Tap below to move the egg to your hatchery.') + '</p></div>';
+      h += left > 0 ? '<button class="btn purple" data-act="speed" data-k="breed" style="width:100%">Finish now · 💎' + DR.speedCost(left) + '</button>' : '<button class="btn green" data-act="collectBreed" style="width:100%">Collect egg</button>';
+      return h;
+    }
+    const ready = Object.values(s.dragons).filter(x => x.lv >= DR.BREED_LEVEL);
+    if (ready.length < 2) return h + '<p class="sub">You need two dragons at level ' + DR.BREED_LEVEL + ' or higher. Feed your dragons in their habitats to level them up.</p><div class="card"><b>Tip</b><p class="sub" style="margin:4px 0 0">Breeding two different elements can create a hybrid dragon with both powers. Some pairs of hybrids can even create a legendary dragon!</p></div>';
+    breedSel = breedSel.map(u => s.dragons[u] && s.dragons[u].lv >= DR.BREED_LEVEL ? u : null);
+    h += '<p class="sub">Pick two dragons (level ' + DR.BREED_LEVEL + '+).</p><div class="grid">' + ready.map(x => { const d = DR.D[x.id], sel = breedSel.includes(x.uid); return '<button class="tile pick' + (sel ? ' sel' : '') + '" data-act="bsel" data-u="' + x.uid + '"><canvas data-dragon="' + x.id + ':' + x.lv + '"></canvas><b>' + d.name.replace(' Dragon', '') + '</b><small>Lv ' + x.lv + '</small>' + (sel ? '<span class="corner">' + (breedSel[0] === x.uid ? '①' : '②') + '</span>' : '') + '</button>'; }).join('') + '</div>';
+    if (breedSel[0] && breedSel[1]) { const t = S.breedTable(s.dragons[breedSel[0]].id, s.dragons[breedSel[1]].id), tot = Object.values(t.w).reduce((a, b) => a + b, 0);
+      h += '<p class="sub" style="margin-top:10px">Possible results:</p><div class="odds">' + Object.entries(t.w).sort((a, b) => b[1] - a[1]).map(([id, v]) => '<span class="rar' + DR.D[id].r + '">' + (s.seen[id] ? DR.D[id].name.replace(' Dragon', '') : '❓ New ' + DR.RARITY[DR.D[id].r].name) + ' · ' + Math.round(v / tot * (t.legend ? 90 : 100)) + '%</span>').join('') + (t.legend ? '<span class="rar3">🌟 Legendary chance · 10%</span>' : '') + '</div>';
+      h += '<button class="btn green" data-act="breed" style="width:100%;margin-top:10px">Breed!</button>'; }
+    return h;
+  };
+  PANELS.build = i => {
+    const s = app.s; let h = head('Build here') + '<p class="sub">Habitats house dragons of their element and earn gold. Farms grow food.</p><div class="grid">';
+    for (const E of DR.ELEMENTS) { const lock = s.level < E.lv, c = S.buildCost(s, 'habitat', E.id); h += '<button class="tile' + (lock ? ' locked' : '') + '" data-act="build" data-i="' + i + '" data-t="habitat" data-el="' + E.id + '"><div style="font-size:30px">' + E.icon + '</div><b>' + E.name + '</b><small>' + (lock ? '🔒 Level ' + E.lv : '🪙' + fmt(c.gold)) + '</small></button>'; }
+    const fc = S.buildCost(s, 'farm'); h += '<button class="tile" data-act="build" data-i="' + i + '" data-t="farm"><div style="font-size:30px">🌾</div><b>Farm</b><small>🪙' + fmt(fc.gold) + '</small></button></div>';
+    return h;
+  };
+  let shopTab = 'eggs';
+  PANELS.shop = tab => {
+    const s = app.s; if (tab) shopTab = tab; let h = head('🏪 Shop') + '<div class="tabs">' + [['eggs', '🥚 Eggs'], ['habitats', '🏠 Habitats'], ['expand', '🏝️ Expand'], ['gems', '💎 Trade']].map(([k, n]) => '<button data-tab="' + k + '" class="' + (shopTab === k ? 'on' : '') + '">' + n + '</button>').join('') + '</div>';
+    if (shopTab === 'eggs') { h += '<p class="sub">Eggs go to your hatchery (' + s.eggs.length + '/' + DR.HATCHERY_CAP((S.hatchery(s) || { lv: 1 }).lv) + ').</p><div class="grid">'; for (const E of DR.ELEMENTS) { const lock = s.level < E.lv, p = DR.eggPrice(E.id); h += '<button class="tile' + (lock ? ' locked' : '') + '" data-act="buyEgg" data-el="' + E.id + '"><canvas data-egg="' + E.id + '"></canvas><b>' + E.name + ' egg</b><small>' + (lock ? '🔒 Level ' + E.lv : p.gold ? '🪙' + fmt(p.gold) : '💎' + p.gems) + '</small></button>'; } h += '</div>'; }
+    if (shopTab === 'habitats') { h += '<p class="sub">Tap an empty spot (＋) on your island to build. Costs now:</p><div class="grid">'; for (const E of DR.ELEMENTS) { const lock = s.level < E.lv; h += '<div class="tile' + (lock ? ' locked' : '') + '"><div style="font-size:28px">' + E.icon + '</div><b>' + E.name + '</b><small>' + (lock ? '🔒 Level ' + E.lv : '🪙' + fmt(S.buildCost(s, 'habitat', E.id).gold)) + '</small></div>'; } h += '<div class="tile"><div style="font-size:28px">🌾</div><b>Farm</b><small>🪙' + fmt(S.buildCost(s, 'farm').gold) + '</small></div></div>'; }
+    if (shopTab === 'expand') { const z = s.zones, free = DR.PLOTS.filter(p => p.zone <= z && !s.buildings[p.i]).length; h += '<div class="card"><b>Island size: ' + (z + 1) + ' / 6</b><p class="sub" style="margin:4px 0 0">' + free + ' empty building spot' + (free === 1 ? '' : 's') + ' right now.</p></div>'; if (z < 5) h += '<button class="btn gold' + (s.level < DR.EXPAND_LEVEL(z) ? ' off' : '') + '" data-act="expand" style="width:100%">Clear the clouds: +' + DR.PLOTS.filter(p => p.zone === z + 1).length + ' spots · 🪙' + fmt(DR.EXPAND_COST(z)) + (s.level < DR.EXPAND_LEVEL(z) ? ' (level ' + DR.EXPAND_LEVEL(z) + ')' : '') + '</button>'; else h += '<p class="sub">Your island is fully expanded!</p>'; }
+    if (shopTab === 'gems') { const packs = [[10, 'gold', 1000 + s.level * 200], [30, 'gold', 3500 + s.level * 700], [10, 'food', 400 + s.level * 80], [30, 'food', 1400 + s.level * 280]]; h += '<p class="sub">Gems are earned by playing: arena, quests, level-ups and daily gifts.</p>'; packs.forEach(([g, k, v], j) => { h += '<div class="card row"><span style="font-size:28px">' + (k === 'gold' ? '🪙' : '🍖') + '</span><div class="grow"><b>' + fmt(v) + ' ' + k + '</b></div><button class="btn purple small" data-act="trade" data-j="' + j + '">💎' + g + '</button></div>'; }); app.packs = packs; }
+    return h;
+  };
+  let bookEl = 'all';
+  PANELS.book = () => {
+    const s = app.s, n = Object.keys(s.seen).length;
+    let h = head('📖 Dragon Book <span class="tag">' + n + '/' + DR.DRAGONS.length + '</span>') + '<div class="tabs"><button data-book="all" class="' + (bookEl === 'all' ? 'on' : '') + '">All</button><button data-book="mine" class="' + (bookEl === 'mine' ? 'on' : '') + '">My dragons</button>' + DR.ELEMENTS.map(E => '<button data-book="' + E.id + '" class="' + (bookEl === E.id ? 'on' : '') + '">' + E.icon + '</button>').join('') + '<button data-book="legend" class="' + (bookEl === 'legend' ? 'on' : '') + '">🌟</button></div>';
+    if (bookEl === 'mine') { const mine = Object.values(s.dragons).sort((a, b) => b.lv - a.lv); h += mine.map(x => dragonCard(x, '<button class="btn ghost small" data-act="dragon" data-u="' + x.uid + '">Open</button>')).join(''); return h; }
+    const list = DR.DRAGONS.filter(d => bookEl === 'all' || (bookEl === 'legend' ? d.kind === 'legend' : d.els.includes(bookEl)));
+    h += '<div class="grid">' + list.map(d => { const seen = !!s.seen[d.id]; return '<button class="tile" data-act="info" data-d="' + d.id + '"><canvas data-dragon="' + d.id + ':12' + (seen ? '' : ':sil') + '"></canvas><b class="rar' + d.r + '">' + (seen ? d.name.replace(' Dragon', '') : '???') + '</b><small>' + d.els.map(e => DR.EL[e].icon).join('') + '</small></button>'; }).join('') + '</div>';
+    return h;
+  };
+  PANELS.info = id => {
+    const s = app.s, d = DR.D[id], seen = !!s.seen[id];
+    let how = d.kind === 'pure' ? 'Buy a ' + DR.EL[d.els[0]].name + ' egg in the Shop, or breed two dragons that carry ' + DR.EL[d.els[0]].name + '.' : d.kind === 'hybrid' ? 'Breed a dragon with ' + DR.EL[d.els[0]].icon + ' ' + DR.EL[d.els[0]].name + ' and a dragon with ' + DR.EL[d.els[1]].icon + ' ' + DR.EL[d.els[1]].name + '.' : 'Breed ' + d.recipe.map(r => s.seen[r] ? DR.D[r].name : 'a secret dragon').join(' with ') + '. It is very rare! Also found as an Arena prize.';
+    return head(seen ? d.name : 'Undiscovered dragon') + '<canvas class="hero-art" data-dragon="' + id + ':14' + (seen ? '' : ':sil') + '"></canvas><div class="row wrap" style="justify-content:center">' + rarTag(d) + elTags(d) + '</div>' +
+      (d.desc && seen ? '<p class="sub" style="text-align:center;margin-top:8px"><i>' + esc(d.desc) + '</i></p>' : '') + '<div class="card" style="margin-top:10px"><b>How to get it</b><p class="sub" style="margin:4px 0 0">' + how + '</p></div>' +
+      '<div class="card"><div class="row"><span class="grow">🪙 ' + fmt(DR.goldRate(d, 1)) + '–' + fmt(DR.goldRate(d, 20)) + '/min</span><span class="grow">🥚 Hatch ' + DR.time(DR.hatchTime(d.r)) + '</span></div></div>';
+  };
+  PANELS.arena = () => {
+    const s = app.s; let h = head('⚔️ Arena <span class="tag">' + s.arena.cleared + '/' + DR.ARENA.length + '</span>') + '<p class="sub">Beat each challenger to climb the ladder. First wins give gems and legendary eggs every 10 steps.</p>';
+    DR.ARENA.forEach((o, i) => { if (i > s.arena.cleared + 2) return; const lock = i > s.arena.cleared, done = i < s.arena.cleared;
+      h += '<div class="card"><div class="row"><div class="grow"><b>' + (i + 1) + '. ' + esc(o.name) + '</b> ' + (done ? '<span class="tag">✓ Beaten</span>' : '') + '<div class="row" style="gap:4px;margin-top:4px">' + o.team.map(m => '<canvas data-dragon="' + m.id + ':' + m.lv + '" style="width:54px;height:46px;border-radius:9px"></canvas>').join('') + '</div><small class="sub">Lv ' + o.team.map(m => m.lv).join('/') + ' · Reward 🪙' + fmt(done ? o.gold * 0.25 : o.gold) + (o.gems && !done ? ' 💎' + o.gems : '') + (o.egg && !done ? ' 🥚' : '') + '</small></div>' +
+        '<button class="btn ' + (lock ? 'ghost off' : done ? 'ghost' : 'red') + ' small" data-act="pickTeam" data-o="' + i + '">' + (lock ? '🔒' : done ? 'Rematch' : 'Fight') + '</button></div></div>'; });
+    return h;
+  };
+  let team = [];
+  PANELS.team = oi => {
+    const s = app.s, o = DR.ARENA[oi], mine = Object.values(s.dragons).sort((a, b) => b.lv - a.lv);
+    team = team.filter(u => s.dragons[u]).slice(0, 3); if (!team.length) team = mine.slice(0, Math.min(3, mine.length)).map(x => x.uid);
+    let h = head('Pick your team') + '<p class="sub">Up to 3 dragons vs ' + esc(o.name) + ' (' + o.team.map(m => DR.D[m.id].els.map(e => DR.EL[e].icon).join('')).join(' ') + '). Element advantages deal 1.5× damage.</p>';
+    h += '<div class="grid">' + mine.map(x => { const d = DR.D[x.id], k = team.indexOf(x.uid); return '<button class="tile pick' + (k >= 0 ? ' sel' : '') + '" data-act="tsel" data-u="' + x.uid + '" data-o="' + oi + '"><canvas data-dragon="' + x.id + ':' + x.lv + '"></canvas><b>' + d.name.replace(' Dragon', '') + '</b><small>Lv ' + x.lv + ' ' + d.els.map(e => DR.EL[e].icon).join('') + '</small>' + (k >= 0 ? '<span class="corner">' + (k + 1) + '</span>' : '') + '</button>'; }).join('') + '</div>';
+    h += '<button class="btn red" data-act="fight" data-o="' + oi + '" style="width:100%;margin-top:10px"' + (team.length ? '' : ' disabled') + '>⚔️ Battle!</button>';
+    return h;
+  };
+  PANELS.quests = () => {
+    const s = app.s; let h = head('📜 Quests');
+    const dr = S.dailyReady(s); h += '<div class="card row"><span style="font-size:32px">🎁</span><div class="grow"><b>Daily gift</b><br><small class="sub">Streak: ' + s.streak + ' day' + (s.streak === 1 ? '' : 's') + ' · day 7 gives 💎30</small></div><button class="btn ' + (dr ? 'gold' : 'ghost off') + ' small" data-act="daily">' + (dr ? 'Claim' : 'Claimed') + '</button></div>';
+    for (const q of DR.QUESTS) { const v = S.questProgress(s, q), done = s.questsDone[q.id]; if (done) continue; h += '<div class="card"><div class="row"><div class="grow"><b>' + q.name + '</b><div class="bar green" style="margin-top:4px"><i style="width:' + v / q.goal * 100 + '%"></i><span>' + v + ' / ' + q.goal + '</span></div></div><button class="btn ' + (v >= q.goal ? 'gold' : 'ghost off') + ' small" data-act="quest" data-q="' + q.id + '">💎' + q.gems + '</button></div></div>'; }
+    const n = DR.QUESTS.filter(q => s.questsDone[q.id]).length; if (n) h += '<p class="sub">' + n + ' quest' + (n > 1 ? 's' : '') + ' completed.</p>';
+    return h;
+  };
+  PANELS.settings = () => { const s = app.s, tg = (k, on) => '<button class="toggle ' + (on ? 'on' : '') + '" data-act="tg" data-k="' + k + '"></button>';
+    return head('⚙️ Settings') + '<div class="card row"><span class="grow">Sound effects</span>' + tg('sound', s.settings.sound) + '</div><div class="card row"><span class="grow">Music</span>' + tg('music', s.settings.music) + '</div>' +
+      '<div class="card"><b>Redeem code</b><div class="row" style="margin-top:6px"><input class="code" id="codeIn" maxlength="24" placeholder="ENTER CODE"><button class="btn gold small" data-act="redeem">Redeem</button></div></div>' +
+      '<div class="card"><div class="row"><span class="grow">Dragons owned</span><b>' + Object.keys(s.dragons).length + '</b></div><div class="row"><span class="grow">Kinds discovered</span><b>' + Object.keys(s.seen).length + '/' + DR.DRAGONS.length + '</b></div><div class="row"><span class="grow">Arena wins</span><b>' + (s.stats.wins || 0) + '</b></div></div>' +
+      '<p class="sub">Eldoria: Dragon Roost · an original offline game. Progress is saved on this device.</p><button class="btn ghost small" data-act="reset">Reset progress</button>'; };
+
+  /* ---------------- Panel actions ---------------- */
+  let resetArm = 0;
+  function click(e) {
+    const s = app.s, t = e.target;
+    const go = t.closest('[data-go]'); if (go) { sfx('tap'); return open(go.dataset.go, go.dataset.arg); }
+    const tab = t.closest('[data-tab]'); if (tab) { sfx('tap'); shopTab = tab.dataset.tab; return open('shop'); }
+    const bk = t.closest('[data-book]'); if (bk) { sfx('tap'); bookEl = bk.dataset.book; return open('book'); }
+    const a = t.closest('[data-act]'); if (!a) return;
+    const D = a.dataset; let r;
+    switch (D.act) {
+      case 'collect': r = S.collect(s, +D.i); if (!r.ok) return fail(r); sfx('coin'); toast('+' + fmt(r.gold) + ' gold'); break;
+      case 'feed': r = S.feed(s, D.u); if (!r.ok) return fail(r); sfx('feed'); levelUps(r.ups); break;
+      case 'dragon': sfx('tap'); return open('dragon', D.u);
+      case 'move': r = S.moveDragon(s, D.u, +D.i); if (!r.ok) return fail(r); sfx('tap'); toast('Moved!'); break;
+      case 'sell': if (a.dataset.armed !== '1') { a.dataset.armed = '1'; a.textContent = 'Tap again to sell'; return; } r = S.sellDragon(s, D.u); if (!r.ok) return fail(r); sfx('coin'); toast('Sold for ' + fmt(r.gold) + ' gold'); persist(true); return close();
+      case 'upHab': r = S.upgradeHabitat(s, +D.i); if (!r.ok) return fail(r); sfx('build'); levelUps(r.ups); break;
+      case 'upHatch': r = S.upgradeHatchery(s, +D.i); if (!r.ok) return fail(r); sfx('build'); levelUps(r.ups); break;
+      case 'plant': r = S.plant(s, +D.i, D.c); if (!r.ok) return fail(r); sfx('harvest'); break;
+      case 'harvest': r = S.harvest(s, +D.i); if (!r.ok) return fail(r); sfx('harvest'); toast('+' + fmt(r.food) + ' food'); levelUps(r.ups); break;
+      case 'speed': r = S.speedUp(s, D.k, D.k === 'farm' ? +D.r : D.r); if (!r.ok) return fail(r); sfx('coin'); break;
+      case 'hatchPick': sfx('tap'); return open('hatchPick', D.e);
+      case 'hatch': { const egg = s.eggs.find(x => x.uid === D.e); r = S.hatch(s, D.e, +D.i); if (!r.ok) return fail(r); sfx('hatch'); persist(true); const x = s.dragons[r.uid], d = DR.D[x.id];
+        modal('<div class="ph"><h2>' + (r.isNew ? '🎉 New dragon!' : 'Hatched!') + '</h2></div><canvas class="hero-art" data-dragon="' + x.id + ':1"></canvas><h3 style="font:700 22px Fredoka;margin:4px 0" class="rar' + d.r + '">' + d.name + '</h3><div class="row wrap" style="justify-content:center">' + rarTag(d) + elTags(d) + '</div>' + (r.isNew ? '<p class="sub" style="margin-top:8px">Added to your Dragon Book!</p>' : '') + '<button class="btn gold" data-close style="width:100%;margin-top:10px">Welcome home!</button>', null, true);
+        levelUps(r.ups); return; }
+      case 'sellEgg': r = S.sellEgg(s, D.e); if (!r.ok) return fail(r); sfx('coin'); persist(true); return open('hatchery', +Object.keys(s.buildings).find(k => s.buildings[k].type === 'hatchery'));
+      case 'bsel': { const u = D.u, k = breedSel.indexOf(u); if (k >= 0) breedSel[k] = null; else if (!breedSel[0]) breedSel[0] = u; else if (!breedSel[1]) breedSel[1] = u; else breedSel = [breedSel[1], u]; sfx('tap'); break; }
+      case 'breed': r = S.startBreed(s, breedSel[0], breedSel[1]); if (!r.ok) return fail(r); sfx('breed'); breedSel = [null, null]; toast('Breeding started!'); break;
+      case 'collectBreed': r = S.collectBreed(s); if (!r.ok) return fail(r); sfx('breed'); toast('Egg moved to the hatchery'); break;
+      case 'build': r = S.build(s, +D.i, D.t, D.el); if (!r.ok) return fail(r); sfx('build'); persist(true); levelUps(r.ups); close(); return;
+      case 'buyEgg': r = S.buyEgg(s, D.el); if (!r.ok) return fail(r); sfx('coin'); toast(DR.EL[D.el].name + ' egg added to the hatchery'); break;
+      case 'expand': r = S.expand(s); if (!r.ok) return fail(r); sfx('build'); toast('The clouds part… new land!'); levelUps(r.ups); break;
+      case 'trade': { const [g, k, v] = app.packs[+D.j]; if (s.gems < g) return fail({ reason: 'Not enough gems' }); s.gems -= g; s[k] += v; sfx('coin'); toast('+' + fmt(v) + ' ' + k); break; }
+      case 'info': sfx('tap'); return open('info', D.d);
+      case 'pickTeam': if (+D.o > s.arena.cleared) return fail({ reason: 'Beat the previous challenger first' }); sfx('tap'); return open('team', +D.o);
+      case 'tsel': { const k = team.indexOf(D.u); if (k >= 0) team.splice(k, 1); else if (team.length < 3) team.push(D.u); else return fail({ reason: 'Up to 3 dragons' }); sfx('tap'); return open('team', +D.o, true); }
+      case 'fight': close(); return startFight(+D.o);
+      case 'daily': r = S.claimDaily(s); if (!r.ok) return fail(r); sfx('level'); toast('Day ' + r.day + ': 💎' + r.gems + ' 🪙' + fmt(r.gold) + ' 🍖' + fmt(r.food)); break;
+      case 'quest': r = S.claimQuest(s, D.q); if (!r.ok) return fail(r); sfx('level'); toast('+' + r.gems + ' gems'); break;
+      case 'tg': s.settings[D.k] = !s.settings[D.k]; if (D.k === 'music') s.settings.music ? DR.Audio.startMusic() : DR.Audio.stopMusic(); sfx('tap'); break;
+      case 'redeem': r = S.redeem(s, $('codeIn').value); if (!r.ok) return fail(r); sfx('level'); toast('Redeemed: ' + Object.entries(r.rw).filter(([k]) => ['gold', 'food', 'gems'].includes(k)).map(([k, v]) => fmt(v) + ' ' + k).join(', ')); break;
+      case 'reset': if (Date.now() - resetArm > 3000) { resetArm = Date.now(); return toast('Tap again to erase all progress'); } try { localStorage.removeItem(DR.SAVE_KEY); } catch (er) { /* ignore */ } app.s = S.defaults(); close(); toast('Progress reset'); app.s.stats.welcomed = 1; return;
+    }
+    persist(); refresh();
+  }
+
+  /* ---------------- Arena fight ---------------- */
+  function startFight(oi) {
+    const s = app.s, o = DR.ARENA[oi]; const mine = team.map(u => s.dragons[u]).filter(Boolean).map(x => ({ id: x.id, lv: x.lv }));
+    if (!mine.length) return fail({ reason: 'Pick at least one dragon' });
+    const b = new DR.Battle.Battle(mine, o.team);
+    app.fight = { b, oi, auto: false, waiting: false };
+    DR.BattleView.start(b); $('fight').hidden = false; sfx('roar'); renderMoves();
+  }
+  function renderMoves() {
+    const f = app.fight; if (!f) return; const u = f.b.A[Math.min(f.b.ia, f.b.A.length - 1)];
+    $('moves').innerHTML = u.moves.map((m, i) => { const E = DR.EL[m.el], col = E ? E.c1 : '#ffb02e', dk = E ? E.dk : '#a86008', cd = u.cds[i], vs = DR.Battle.mult(m.el, f.b.b.d); return '<button class="move' + (u.moves.length === 3 && i === 2 ? ' wide' : '') + '" data-mv="' + i + '"' + (cd > 0 || f.waiting || f.b.over ? ' disabled' : '') + ' style="background:linear-gradient(180deg,' + col + ',' + dk + ')">' + (E ? E.icon : '🌟') + ' ' + m.name + '<small>' + (cd > 0 ? 'Ready in ' + cd + ' turn' + (cd > 1 ? 's' : '') : 'Power ' + Math.round(m.pow * 100) + '%' + (vs > 1 ? ' · Super effective!' : vs < 1 ? ' · Weak' : '')) + '</small></button>'; }).join('');
+    $('autoFight').textContent = 'Auto: ' + (f.auto ? 'on' : 'off');
+  }
+  $('moves').addEventListener('click', e => { const b = e.target.closest('[data-mv]'); if (!b || b.disabled) return; doRound(+b.dataset.mv); });
+  function doRound(i) {
+    const f = app.fight; if (!f || f.waiting || f.b.over) return;
+    f.waiting = true; renderMoves();
+    const ev = f.b.round(i);
+    DR.BattleView.play(ev, () => { f.waiting = false; if (f.b.over) return setTimeout(() => endFight(), 500); renderMoves(); if (f.auto) setTimeout(() => app.fight === f && doRound(f.b.pick(f.b.a, f.b.b)), 300); });
+  }
+  $('autoFight').addEventListener('click', () => { const f = app.fight; if (!f) return; f.auto = !f.auto; sfx('tap'); renderMoves(); if (f.auto && !f.waiting) doRound(f.b.pick(f.b.a, f.b.b)); });
+  $('fleeBtn').addEventListener('click', () => { if (!app.fight) return; if (app.fight.b.over) return endFight(); app.fight = null; $('fight').hidden = true; toast('You left the arena'); });
+  function endFight() {
+    const f = app.fight; if (!f) return; app.fight = null; $('fight').hidden = true;
+    if (f.b.over === 'win') { const r = S.arenaWin(app.s, f.oi); sfx('win'); persist(true);
+      modal('<div class="ph"><h2>🏆 Victory!</h2></div><p class="sub">You defeated ' + esc(DR.ARENA[f.oi].name) + '.</p><div class="big-reward"><span>🪙 ' + fmt(r.gold) + '</span><span>🍖 ' + fmt(r.food) + '</span>' + (r.gems ? '<span>💎 ' + r.gems + '</span>' : '') + '</div>' + (r.egg ? '<canvas data-egg="' + r.egg + '" style="width:80px;height:90px;margin:0 auto"></canvas><p class="sub">A ' + DR.RARITY[DR.D[r.egg].r].name + ' egg was sent to your hatchery!</p>' : '') + '<button class="btn gold" data-close style="width:100%">Collect</button>', null, true); levelUps(r.ups);
+    } else { sfx('lose'); modal('<div class="ph"><h2>Defeat</h2></div><p class="sub">Feed your dragons to raise their level, and pick elements that are strong against your opponent.</p><button class="btn" data-close style="width:100%">OK</button>', null, true); }
+  }
+
+  /* ---------------- HUD & loop ---------------- */
+  let last = 0, hudT = 0, panelT = 0;
+  function hud() {
+    const s = app.s; $('hGold').textContent = fmt(s.gold); $('hFood').textContent = fmt(s.food); $('hGems').textContent = fmt(s.gems); $('hLvl').textContent = s.level; $('hXp').style.width = Math.min(100, s.xp / DR.xpForLevel(s.level) * 100) + '%';
+    S.tick(s); const any = Object.values(s.buildings).filter(b => b.type === 'habitat' && b.gold >= 10).length; $('collectAll').hidden = any < 2;
+    const now = nowMs(), badges = { quests: DR.QUESTS.filter(q => !s.questsDone[q.id] && S.questProgress(s, q) >= q.goal).length + (S.dailyReady(s) ? 1 : 0), breed: s.breeding && now >= s.breeding.end ? 1 : 0 };
+    document.querySelectorAll('#dock [data-open]').forEach(b => { const n = badges[b.dataset.open] || 0; let el = b.querySelector('.badge'); if (n && !el) { el = document.createElement('span'); el.className = 'badge'; b.appendChild(el); } if (el) { if (n) el.textContent = n; else el.remove(); } });
+  }
+  function loop(ts) {
+    const dt = Math.min(0.1, (ts - last) / 1000); last = ts;
+    try {
+      const t = ts / 1000, now = nowMs();
+      if (app.fight) { const cv = $('fightCv'), r = cv.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1); if (cv.width !== Math.round(r.width * dpr)) { cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); } DR.BattleView.draw(cv, dt); }
+      else { const r = world.getBoundingClientRect(); if (world.width !== Math.round(r.width * Math.min(2, window.devicePixelRatio || 1))) resize(); DR.Island.draw(world, app.s, t, now); }
+      hudT -= dt; if (hudT <= 0) { hudT = 0.25; hud(); }
+      panelT -= dt; if (panelT <= 0) { panelT = 1; if (app.panel && ['farm', 'hatchery', 'breed', 'habitat'].includes(app.panel.kind) && !$('sheet').hidden) refresh(); persist(); }
+    } catch (e) { console.error('[Dragon Roost]', e); }
+    requestAnimationFrame(loop);
+  }
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { persist(true); DR.Audio.stopMusic(); } else if (app.started && app.s.settings.music) DR.Audio.startMusic(); });
+  window.addEventListener('pagehide', () => persist(true));
+  requestAnimationFrame(titleLoop);
+})();
+
+</script>
+</body>
+</html>
